@@ -116,7 +116,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 			// create ObjCProtocol type
 			TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
-			Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.ObjCProtocol");
+			Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObjectProtocol");
 			JCTree.JCExpression exp = tm.Type(fwClass.asType());
 			// add type to tree
 			ccd.implementing = ccd.implementing.append(exp);
