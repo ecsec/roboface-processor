@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>org.openecard.tools</groupId>
+	<artifactId>roboface-parent</artifactId>
+	<packaging>pom</packaging>
+	<version>1.0.0-SNAPSHOT</version>
+	<name>RoboVM Interface Annotation Processor</name>
+
+	<organization>
+		<name>ecsec GmbH</name>
+		<url>http://www.ecsec.de</url>
+	</organization>
+
+	<licenses>
+		<license>
+			<name>GNU General Public License Version 3</name>
+			<url>https://www.gnu.org/licenses/gpl-3.0</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<connection>scm:git:https://github.com/ecsec/roboface-processor.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/ecsec/roboface-processor.git</developerConnection>
+		<url>https://github.com/ecsec/open-ecard</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<distributionManagement>
+		<repository>
+			<id>openecard-repos</id>
+			<name>Openecard Release Repo</name>
+			<url>https://mvn.ecsec.de/repository/openecard-release</url>
+		</repository>
+		<snapshotRepository>
+			<id>openecard-repos</id>
+			<name>Openecard Snapshot Repo</name>
+			<url>https://mvn.ecsec.de/repository/openecard-snapshot</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<modules>
+		<module>annotation</module>
+		<module>processor</module>
+		<module>example</module>
+	</modules>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.min.version>3.6.1</maven.min.version>
+		<license.licenseName>gpl_v3</license.licenseName>
+
+		<used.java.version>11</used.java.version>
+
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+
+        <!-- Netbeans config properties -->
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.tab-size>4</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.tab-size>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.text-line-wrap>none</org-netbeans-modules-editor-indent.CodeStyle.project.text-line-wrap>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>4</org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>120</org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>
+        <org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>false</org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>
+        <org-netbeans-modules-editor-indent.CodeStyle.usedProfile>project</org-netbeans-modules-editor-indent.CodeStyle.usedProfile>
+	</properties>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>3.0.0-M2</version>
+					<configuration>
+						<rules>
+							<requireMavenVersion>
+								<version>[${maven.min.version},)</version>
+							</requireMavenVersion>
+							<requireJavaVersion>
+								<version>[${used.java.version},)</version>
+							</requireJavaVersion>
+						</rules>
+					</configuration>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>3.8.1</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>2.5.3</version>
+					<configuration>
+						<tagNameFormat>v@{project.version}</tagNameFormat>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+</project>

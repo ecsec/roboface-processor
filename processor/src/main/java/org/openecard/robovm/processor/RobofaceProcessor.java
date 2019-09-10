@@ -1,0 +1,298 @@
+/****************************************************************************
+ * Copyright (C) 2019 ecsec GmbH.
+ * All rights reserved.
+ * Contact: ecsec GmbH (info@ecsec.de)
+ *
+ * This file is part of the Open eCard App.
+ *
+ * GNU General Public License Usage
+ * This file may be used under the terms of the GNU General Public
+ * License version 3.0 as published by the Free Software Foundation
+ * and appearing in the file LICENSE.GPL included in the packaging of
+ * this file. Please review the following information to ensure the
+ * GNU General Public License version 3.0 requirements will be met:
+ * http://www.gnu.org/copyleft/gpl.html.
+ *
+ * Other Usage
+ * Alternatively, this file may be used in accordance with the terms
+ * and conditions contained in a signed written agreement between
+ * you and ecsec GmbH.
+ *
+ ***************************************************************************/
+
+package org.openecard.robovm.processor;
+
+import org.openecard.robovm.annotations.FrameworkInterface;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.util.TreePath;
+import com.sun.source.util.TreePathScanner;
+import com.sun.source.util.Trees;
+import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.tree.JCTree;
+import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
+import com.sun.tools.javac.tree.TreeMaker;
+import com.sun.tools.javac.tree.TreeTranslator;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedSourceVersion;
+import javax.lang.model.SourceVersion;
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.TypeElement;
+import javax.tools.Diagnostic;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
+import org.openecard.robovm.annotations.FrameworkObject;
+
+
+/**
+ *
+ * @author Tobias Wich
+ */
+@SupportedAnnotationTypes({
+    "org.openecard.robovm.annotations.FrameworkInterface",
+    "org.openecard.robovm.annotations.FrameworkObject"
+})
+@SupportedSourceVersion(SourceVersion.RELEASE_8)
+//@AutoService(Processor.class)
+public class RobofaceProcessor extends AbstractProcessor {
+
+    private JavacProcessingEnvironment jcProcEnv;
+
+    private boolean firstPass;
+    private List<ProtocolDefinition> protoDefs;
+    private List<ObjectDefinition> objDefs;
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnv) {
+	super.init(processingEnv);
+	jcProcEnv = (JavacProcessingEnvironment) processingEnv;
+	firstPass = true;
+	protoDefs = new ArrayList<>();
+	objDefs = new ArrayList<>();
+    }
+
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment env) {
+	if (firstPass) {
+	    System.out.println("Executing processor.");
+	    firstPass = false;
+	} else {
+	    // skipping further executions
+	    return true;
+	}
+
+	final Trees trees = Trees.instance(processingEnv);
+	final TreePathScanner<Object, CompilationUnitTree> ifaceScanner, objScanner;
+
+	ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
+
+	    @Override
+	    public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
+		if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
+		    final JCCompilationUnit compilationUnit = (JCCompilationUnit) unitTree;
+		    final JCTree.JCClassDecl ccd = (JCTree.JCClassDecl) classTree;
+
+		    // Only process on files which have been compiled from source
+		    if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE) {
+			String ifaceName = classTree.getSimpleName().toString();
+			System.out.println("Processing class " + ifaceName);
+
+			// record type information for header generation
+			final ProtocolDefinition protoDef = new ProtocolDefinition(ifaceName, ccd.implementing);
+			protoDefs.add(protoDef);
+
+
+			// create ObjCProtocol type
+			TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+			Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.ObjCProtocol");
+			JCTree.JCExpression exp = tm.Type(fwClass.asType());
+			// add type to tree
+			ccd.implementing = ccd.implementing.append(exp);
+
+
+			// find methods in this interface and add @Method annotation
+			ccd.accept(new TreeTranslator() {
+			    @Override
+			    public <T extends JCTree> T translate(T tree) {
+				if (tree != null && (tree.getKind() == Tree.Kind.METHOD) ) {
+				    return super.translate(tree);
+				} else {
+				    return tree;
+				}
+			    }
+
+			    @Override
+			    public void visitMethodDef(JCTree.JCMethodDecl tree) {
+				super.visitMethodDef(tree);
+				System.out.println("Adding @Method annotation to method " + tree.name);
+
+				// capture method definitions
+				MethodDefinition md = new MethodDefinition(tree.name.toString(),
+					tree.getReturnType().type);
+				protoDef.addMethod(md);
+				for (JCTree.JCVariableDecl paramDecl : tree.params) {
+				    MethodParameter mp = new MethodParameter(paramDecl.name.toString(),
+					    paramDecl.getType().type);
+				    md.addParam(mp);
+				}
+
+				// create @Method type
+				TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+				Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
+				JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(fwClass.asType(), com.sun.tools.javac.util.List.nil()));
+				tree.mods.annotations = tree.mods.annotations.append(at);
+			    }
+			});
+
+//			compilationUnit.accept(new TreeTranslator() {
+//			    @Override
+//			    public <T extends JCTree> T translate(T tree) {
+//				if (tree != null) {
+//				    System.out.println("translate " + tree.getKind());
+//				}
+//				//return super.translate(tree); //To change body of generated methods, choose Tools | Templates.
+//				return tree;
+//			    }
+//
+//			    @Override
+//			    public void visitClassDef(JCTree.JCClassDecl tree) {
+//				super.visitClassDef(tree);
+//
+////				TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+////				Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.ObjCProtocol");
+////				JCTree.JCExpression exp = tm.Type(fwClass.asType());
+////				System.out.println(exp.toString());
+////				tree.implementing = tree.implementing.append(exp);
+//			    }
+//
+//			    @Override
+//			    public void visitMethodDef(JCTree.JCMethodDecl tree) {
+//				super.visitMethodDef(tree);
+//				System.out.println("method found "+tree.toString());
+//			    }
+//
+//			});
+		    }
+		}
+
+		return trees;
+	    }
+	};
+
+
+	objScanner = new TreePathScanner<Object, CompilationUnitTree>() {
+
+	    @Override
+	    public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
+		if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
+		    final JCCompilationUnit compilationUnit = (JCCompilationUnit) unitTree;
+		    final JCTree.JCClassDecl ccd = (JCTree.JCClassDecl) classTree;
+
+		    // Only process on files which have been compiled from source
+		    if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE) {
+			System.out.println("Processing class " + classTree.getSimpleName());
+			String className = ccd.sym.fullname.toString();
+
+			// TODO: find out how to properly access the annotation on the tree
+			//System.out.println(ccd.mods.getAnnotations());
+			// when we hit this code, the annotation must be present, so assume it will always be set
+			String factoryName = null;
+			for (JCTree.JCAnnotation annotation : ccd.mods.getAnnotations()) {
+			    if (annotation.type.toString().equals(FrameworkObject.class.getName())) {
+				for (JCTree.JCExpression arg : annotation.getArguments()) {
+				    JCTree.JCAssign arg1 = (JCTree.JCAssign) arg;
+				    JCTree.JCLiteral val = (JCTree.JCLiteral) arg1.rhs;
+				    factoryName = (String) val.value;
+				}
+			    }
+			}
+
+			// record type information for header generation
+			ArrayList<String> ifaces = new ArrayList<>();
+			for (JCTree.JCExpression exp : ccd.getImplementsClause()) {
+			    //System.out.println("finding ifaces: " + exp.getClass());
+			    if (exp instanceof JCTree.JCFieldAccess) {
+				JCTree.JCFieldAccess exp1 = (JCTree.JCFieldAccess) exp;
+				ifaces.add(exp1.getIdentifier().toString());
+			    } else {
+				ifaces.add(exp.toString());
+			    }
+			}
+			final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, ifaces);
+			objDefs.add(objDef);
+
+
+			// create ObjCProtocol type
+			TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+			Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
+			JCTree.JCExpression exp = tm.Type(fwClass.asType());
+			// add type to tree
+			ccd.extending = exp;
+		    }
+		}
+
+		return trees;
+	    }
+	};
+
+
+try {
+	for (final Element element : env.getElementsAnnotatedWith(FrameworkInterface.class)) {
+	    if (element.getKind() == ElementKind.INTERFACE) {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+			"@FrameworkInterface is being applied to an interface.", element);
+
+		final TreePath path = trees.getPath(element);
+		//processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
+		ifaceScanner.scan(path, path.getCompilationUnit());
+	    } else {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+			"@FrameworkInterface must only be applied to interfaces.", element);
+	    }
+	}
+
+	for (final Element element : env.getElementsAnnotatedWith(FrameworkObject.class)) {
+	    if (element.getKind() == ElementKind.CLASS) {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+			"@FrameworkObject is being applied to a class.", element);
+
+		final TreePath path = trees.getPath(element);
+		//processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
+		objScanner.scan(path, path.getCompilationUnit());
+	    } else {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+			"@FrameworkObject must only be applied to classes.", element);
+	    }
+	}
+
+	if (! protoDefs.isEmpty()) {
+	    try {
+		HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
+		FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "FrameworkIface.h");
+		h.writeHeader(f.openWriter());
+	    } catch (IOException ex) {
+		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
+	    }
+	}
+}catch (RuntimeException ex) {
+    ex.printStackTrace();
+    throw ex;
+}
+
+	// claim annotation and prevent further processing
+	return true;
+    }
+
+}
