@@ -12,13 +12,16 @@
 	<packaging>jar</packaging>
 	<name>Roboface Annotation Processor Example</name>
 
+	<properties>
+		<robovm.version>2.3.7</robovm.version>
+	</properties>
+
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.1</version>
 					<configuration>
 						<annotationProcessorPaths>
 							<annotationProcessorPath>
@@ -36,13 +39,6 @@
 						<showWarnings>true</showWarnings>
 						<!--failOnWarning>true</failOnWarning-->
 					</configuration>
-					<!--dependencies>
-						<dependency>
-							<groupId>org.openecard.tools</groupId>
-							<artifactId>roboface-processor</artifactId>
-							<version>1.0.0-SNAPSHOT</version>
-						</dependency>
-					</dependencies-->
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -59,12 +55,14 @@
 		<dependency>
 			<groupId>com.mobidevelop.robovm</groupId>
 			<artifactId>robovm-rt</artifactId>
-			<version>2.3.7</version>
+			<version>${robovm.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.mobidevelop.robovm</groupId>
 			<artifactId>robovm-cocoatouch</artifactId>
-			<version>2.3.7</version>
+			<version>${robovm.version}</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
