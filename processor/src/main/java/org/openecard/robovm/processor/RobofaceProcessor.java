@@ -156,34 +156,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 			    }
 			});
 
-//			compilationUnit.accept(new TreeTranslator() {
-//			    @Override
-//			    public <T extends JCTree> T translate(T tree) {
-//				if (tree != null) {
-//				    System.out.println("translate " + tree.getKind());
-//				}
-//				//return super.translate(tree); //To change body of generated methods, choose Tools | Templates.
-//				return tree;
-//			    }
-//
-//			    @Override
-//			    public void visitClassDef(JCTree.JCClassDecl tree) {
-//				super.visitClassDef(tree);
-//
-////				TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
-////				Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.ObjCProtocol");
-////				JCTree.JCExpression exp = tm.Type(fwClass.asType());
-////				System.out.println(exp.toString());
-////				tree.implementing = tree.implementing.append(exp);
-//			    }
-//
-//			    @Override
-//			    public void visitMethodDef(JCTree.JCMethodDecl tree) {
-//				super.visitMethodDef(tree);
-//				System.out.println("method found "+tree.toString());
-//			    }
-//
-//			});
 		    }
 		}
 
