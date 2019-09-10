@@ -220,48 +220,48 @@ public class RobofaceProcessor extends AbstractProcessor {
 	};
 
 
-try {
-	for (final Element element : env.getElementsAnnotatedWith(FrameworkInterface.class)) {
-	    if (element.getKind() == ElementKind.INTERFACE) {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-			"@FrameworkInterface is being applied to an interface.", element);
+	try {
+	    for (final Element element : env.getElementsAnnotatedWith(FrameworkInterface.class)) {
+		if (element.getKind() == ElementKind.INTERFACE) {
+		    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+			    "@FrameworkInterface is being applied to an interface.", element);
 
-		final TreePath path = trees.getPath(element);
-		//processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
-		ifaceScanner.scan(path, path.getCompilationUnit());
-	    } else {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-			"@FrameworkInterface must only be applied to interfaces.", element);
+		    final TreePath path = trees.getPath(element);
+		    //processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
+		    ifaceScanner.scan(path, path.getCompilationUnit());
+		} else {
+		    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+			    "@FrameworkInterface must only be applied to interfaces.", element);
+		}
 	    }
-	}
 
-	for (final Element element : env.getElementsAnnotatedWith(FrameworkObject.class)) {
-	    if (element.getKind() == ElementKind.CLASS) {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
-			"@FrameworkObject is being applied to a class.", element);
+	    for (final Element element : env.getElementsAnnotatedWith(FrameworkObject.class)) {
+		if (element.getKind() == ElementKind.CLASS) {
+		    processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+			    "@FrameworkObject is being applied to a class.", element);
 
-		final TreePath path = trees.getPath(element);
-		//processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
-		objScanner.scan(path, path.getCompilationUnit());
-	    } else {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-			"@FrameworkObject must only be applied to classes.", element);
+		    final TreePath path = trees.getPath(element);
+		    //processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
+		    objScanner.scan(path, path.getCompilationUnit());
+		} else {
+		    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+			    "@FrameworkObject must only be applied to classes.", element);
+		}
 	    }
-	}
 
-	if (! protoDefs.isEmpty()) {
-	    try {
-		HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
-		FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "FrameworkIface.h");
-		h.writeHeader(f.openWriter());
-	    } catch (IOException ex) {
-		processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
+	    if (! protoDefs.isEmpty()) {
+		try {
+		    HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
+		    FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "FrameworkIface.h");
+		    h.writeHeader(f.openWriter());
+		} catch (IOException ex) {
+		    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
+		}
 	    }
+	} catch (RuntimeException ex) {
+	    ex.printStackTrace();
+	    throw ex;
 	}
-}catch (RuntimeException ex) {
-    ex.printStackTrace();
-    throw ex;
-}
 
 	// claim annotation and prevent further processing
 	return true;
