@@ -35,7 +35,6 @@ When using a maven setup, the compiler plugin and the dependencies should look a
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.1</version>
 				<configuration>
 					<annotationProcessorPaths>
 						<annotationProcessorPath>
