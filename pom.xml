@@ -101,6 +101,8 @@
 					<configuration>
 						<tagNameFormat>v@{project.version}</tagNameFormat>
 						<autoVersionSubmodules>true</autoVersionSubmodules>
+						<!-- disable because of internal class access which is prohibited in newer java versions -->
+						<arguments>-Dmaven.javadoc.skip=true</arguments>
 					</configuration>
 				</plugin>
 			</plugins>
