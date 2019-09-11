@@ -249,10 +249,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 				}
 			}
 
-			if (!protoDefs.isEmpty()) {
+			if (! protoDefs.isEmpty()) {
 				try {
 					HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
-					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "", "FrameworkIface.h");
+					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "roboheaders", "RoboFrameworkInterface.h");
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());

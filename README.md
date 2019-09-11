@@ -15,7 +15,7 @@ First of all, the `@FrameworkInterface` and `@FrameworkObject` annotations shoul
 which shall be exposed to the native world. Interfaces are not processed recursively and therefore any super interfaces
 must be annotated explicitly if their methods shall be exposed as well. Framework objects must implement exactly one of
 the exposed interfaces as this protocol will be used to identify the type of the object. After successful compilation
-there will be a ObjectiveC header file named `FrameworkIface.h` in the target direktory of the compiler.
+there will be a ObjectiveC header file named `roboheaders/RoboFrameworkInterface.h` in the target direktory of the compiler.
 
 The class of the annotation processor is `org.openecard.robovm.processor.RobofaceProcessor` and can be used in the usual
 fashion as an annotation processer. Also note that it is necessary to include `robovm-cocoatouch` and `robovm-rt` as
