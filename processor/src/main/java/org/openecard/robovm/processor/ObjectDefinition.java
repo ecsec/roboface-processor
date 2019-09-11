@@ -31,36 +31,36 @@ import java.util.List;
  */
 public class ObjectDefinition {
 
-    private final String javaName;
-    private final String factoryName;
-    private final List<String> ifaces;
+	private final String javaName;
+	private final String factoryName;
+	private final List<String> ifaces;
 
-    public ObjectDefinition(String javaName, String factoryName, List<String> ifaces) {
-	this.javaName = javaName;
-	this.factoryName = factoryName;
-	this.ifaces = ifaces;
-    }
-
-    public String getFactoryMethodName() {
-	return factoryName;
-    }
-
-    public String getProtocolName(List<ProtocolDefinition> protocols) {
-	for (String iface : ifaces) {
-	    //System.out.println("iface: " + iface);
-	    for (ProtocolDefinition pd : protocols) {
-		//System.out.println("protos: " + pd.getObjcName());
-		if (iface.equals(pd.getObjcName())) {
-		    return iface;
-		}
-	    }
+	public ObjectDefinition(String javaName, String factoryName, List<String> ifaces) {
+		this.javaName = javaName;
+		this.factoryName = factoryName;
+		this.ifaces = ifaces;
 	}
 
-	throw new RuntimeException("Missing ObjcProtocol on NSObject instance.");
-    }
+	public String getFactoryMethodName() {
+		return factoryName;
+	}
 
-    public String getJavaName() {
-	return javaName;
-    }
+	public String getProtocolName(List<ProtocolDefinition> protocols) {
+		for (String iface : ifaces) {
+			//System.out.println("iface: " + iface);
+			for (ProtocolDefinition pd : protocols) {
+				//System.out.println("protos: " + pd.getObjcName());
+				if (iface.equals(pd.getObjcName())) {
+					return iface;
+				}
+			}
+		}
+
+		throw new RuntimeException("Missing ObjcProtocol on NSObject instance.");
+	}
+
+	public String getJavaName() {
+		return javaName;
+	}
 
 }

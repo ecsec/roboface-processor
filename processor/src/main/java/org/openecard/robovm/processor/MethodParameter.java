@@ -31,20 +31,20 @@ import com.sun.tools.javac.code.Type;
  */
 public class MethodParameter {
 
-    private final String name;
-    private final TypeDefinition type;
+	private final String name;
+	private final TypeDefinition type;
 
-    public MethodParameter(String name, Type type) {
-	this.name = name;
-	this.type = new TypeDefinition(type);
-    }
+	public MethodParameter(String name, Type type) {
+		this.name = name;
+		this.type = new TypeDefinition(type);
+	}
 
-    public TypeDefinition getType() {
-	return type;
-    }
+	public TypeDefinition getType() {
+		return type;
+	}
 
-    public String getName() {
-	return name;
-    }
+	public String getName() {
+		return name;
+	}
 
 }

@@ -34,41 +34,41 @@ import java.util.List;
  */
 public class ProtocolDefinition {
 
-    private final String objcName;
-    private final ArrayList<String> extensions;
-    private final ArrayList<MethodDefinition> methods;
+	private final String objcName;
+	private final ArrayList<String> extensions;
+	private final ArrayList<MethodDefinition> methods;
 
-    public ProtocolDefinition(String ifaceName, com.sun.tools.javac.util.List<JCTree.JCExpression> implementing) {
-	this.objcName = ifaceName;
-	this.extensions = new ArrayList<>();
-	this.methods = new ArrayList<>();
+	public ProtocolDefinition(String ifaceName, com.sun.tools.javac.util.List<JCTree.JCExpression> implementing) {
+		this.objcName = ifaceName;
+		this.extensions = new ArrayList<>();
+		this.methods = new ArrayList<>();
 
-	implementing.forEach((nextIface) -> {
-	    extensions.add(nextIface.type.asElement().getSimpleName().toString());
-	});
-    }
+		implementing.forEach((nextIface) -> {
+			extensions.add(nextIface.type.asElement().getSimpleName().toString());
+		});
+	}
 
 
-    public String getObjcName() {
-	return objcName;
-    }
+	public String getObjcName() {
+		return objcName;
+	}
 
-    public void addMethod(MethodDefinition method) {
-	methods.add(method);
-    }
+	public void addMethod(MethodDefinition method) {
+		methods.add(method);
+	}
 
-    public List<MethodDefinition> getMethods() {
-	return Collections.unmodifiableList(methods);
-    }
+	public List<MethodDefinition> getMethods() {
+		return Collections.unmodifiableList(methods);
+	}
 
-    public List<String> getExtensions() {
-	return Collections.unmodifiableList(extensions);
-    }
+	public List<String> getExtensions() {
+		return Collections.unmodifiableList(extensions);
+	}
 
-    public List<String> getExtensions(List<String> objcProtocols) {
-	ArrayList<String> result = new ArrayList<>(extensions);
-	result.retainAll(objcProtocols);
-	return result;
-    }
+	public List<String> getExtensions(List<String> objcProtocols) {
+		ArrayList<String> result = new ArrayList<>(extensions);
+		result.retainAll(objcProtocols);
+		return result;
+	}
 
 }

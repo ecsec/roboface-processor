@@ -33,76 +33,75 @@ import java.util.List;
  */
 public class HeaderGenerator {
 
-    private final List<ProtocolDefinition> protocols;
-    private final List<ObjectDefinition> objects;
+	private final List<ProtocolDefinition> protocols;
+	private final List<ObjectDefinition> objects;
 
-    public HeaderGenerator(List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
-	this.protocols = protocols;
-	this.objects = objects;
-    }
-
-    
-
-    public void writeHeader(Writer headerWriter) {
-	try (PrintWriter w = new PrintWriter(headerWriter)) {
-	    writeFileHeader(w);
-	    for (ProtocolDefinition p : protocols) {
-		writeProtocol(w, p);
-	    }
-	    for (ObjectDefinition o : objects) {
-		writeObject(w, o);
-	    }
-	}
-    }
-
-    private void writeFileHeader(PrintWriter w) {
-	w.println("#import <Foundation/Foundation.h>");
-	w.println();
-    }
-
-    private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
-	String objcName = p.getObjcName();
-	w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-	w.printf("@protocol %s", objcName);
-	// add protocol inheritance
-	if (! p.getExtensions().isEmpty()) {
-	    w.print("<");
-	    String prefix = "";
-	    for (String ext : p.getExtensions()) {
-		w.printf("%s%s", prefix, ext);
-		ext = ", ";
-	    }
-	    w.print(">");
-	}
-	w.println();
-
-	for (MethodDefinition md : p.getMethods()) {
-	    writeMethod(w, md);
+	public HeaderGenerator(List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
+		this.protocols = protocols;
+		this.objects = objects;
 	}
 
-	w.println("@end");
-	w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
-	w.println();
-    }
 
-    private void writeMethod(PrintWriter w, MethodDefinition md) {
-	w.printf("-(%s) %s", md.getReturnType(), md.getName());
-	if (! md.getParameters().isEmpty()) {
-	    String prefix = ": ";
-	    for (MethodParameter mp : md.getParameters()) {
-		w.printf("%s(%s) %s", prefix, mp.getType(), mp.getName());
-	    }
+	public void writeHeader(Writer headerWriter) {
+		try (PrintWriter w = new PrintWriter(headerWriter)) {
+			writeFileHeader(w);
+			for (ProtocolDefinition p : protocols) {
+				writeProtocol(w, p);
+			}
+			for (ObjectDefinition o : objects) {
+				writeObject(w, o);
+			}
+		}
 	}
-	w.println(";");
-    }
 
-    private void writeObject(PrintWriter w, ObjectDefinition o) {
-	String protocolName = o.getProtocolName(protocols);
-	w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
-	w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);
-	w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
-	w.println("}");
-	w.println();
-    }
+	private void writeFileHeader(PrintWriter w) {
+		w.println("#import <Foundation/Foundation.h>");
+		w.println();
+	}
+
+	private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
+		String objcName = p.getObjcName();
+		w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		w.printf("@protocol %s", objcName);
+		// add protocol inheritance
+		if (! p.getExtensions().isEmpty()) {
+			w.print("<");
+			String prefix = "";
+			for (String ext : p.getExtensions()) {
+				w.printf("%s%s", prefix, ext);
+				ext = ", ";
+			}
+			w.print(">");
+		}
+		w.println();
+
+		for (MethodDefinition md : p.getMethods()) {
+			writeMethod(w, md);
+		}
+
+		w.println("@end");
+		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		w.println();
+	}
+
+	private void writeMethod(PrintWriter w, MethodDefinition md) {
+		w.printf("-(%s) %s", md.getReturnType(), md.getName());
+		if (! md.getParameters().isEmpty()) {
+			String prefix = ": ";
+			for (MethodParameter mp : md.getParameters()) {
+				w.printf("%s(%s) %s", prefix, mp.getType(), mp.getName());
+			}
+		}
+		w.println(";");
+	}
+
+	private void writeObject(PrintWriter w, ObjectDefinition o) {
+		String protocolName = o.getProtocolName(protocols);
+		w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
+		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);
+		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
+		w.println("}");
+		w.println();
+	}
 
 }

@@ -32,6 +32,6 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface MyFrameworkProtocol {
     
-    void bar(int foo, long bar, MyFrameworkProtocol self);
+	void bar(int foo, long bar, MyFrameworkProtocol self);
 
 }

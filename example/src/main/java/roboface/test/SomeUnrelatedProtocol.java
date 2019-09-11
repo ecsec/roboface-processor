@@ -31,11 +31,11 @@ import org.openecard.robovm.annotations.FrameworkInterface;
  */
 public interface SomeUnrelatedProtocol extends MyFrameworkProtocol {
 
-    void someFun();
+	void someFun();
 
-    @FrameworkInterface
-    public interface InnerIface extends MyFrameworkProtocol {
-	void innerFun();
-    }
+	@FrameworkInterface
+	public interface InnerIface extends MyFrameworkProtocol {
+		void innerFun();
+	}
 
 }

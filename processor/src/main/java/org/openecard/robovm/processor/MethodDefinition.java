@@ -34,30 +34,30 @@ import java.util.List;
  */
 public class MethodDefinition {
 
-    private final String name;
-    private final TypeDefinition returnType;
-    private final ArrayList<MethodParameter> params;
+	private final String name;
+	private final TypeDefinition returnType;
+	private final ArrayList<MethodParameter> params;
 
-    public MethodDefinition(String name, Type returnType) {
-	this.name = name;
-	this.returnType = new TypeDefinition(returnType);
-	this.params = new ArrayList<>();
-    }
+	public MethodDefinition(String name, Type returnType) {
+		this.name = name;
+		this.returnType = new TypeDefinition(returnType);
+		this.params = new ArrayList<>();
+	}
 
-    public void addParam(MethodParameter param) {
-	this.params.add(param);
-    }
+	public void addParam(MethodParameter param) {
+		this.params.add(param);
+	}
 
-    public List<MethodParameter> getParameters() {
-	return Collections.unmodifiableList(params);
-    }
+	public List<MethodParameter> getParameters() {
+		return Collections.unmodifiableList(params);
+	}
 
-    public TypeDefinition getReturnType() {
-	return returnType;
-    }
+	public TypeDefinition getReturnType() {
+		return returnType;
+	}
 
-    public String getName() {
-	return name;
-    }
+	public String getName() {
+		return name;
+	}
 
 }

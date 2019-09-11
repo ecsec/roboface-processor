@@ -31,35 +31,35 @@ import com.sun.tools.javac.code.Type;
  */
 public class TypeDefinition {
 
-    private final String type;
+	private final String type;
 
-    public TypeDefinition(Type type) {
+	public TypeDefinition(Type type) {
 //	System.out.println(type);
 //	System.out.println(type.tsym.getSimpleName().toString());
-	this.type = type.tsym.getSimpleName().toString();
-    }
-
-    @Override
-    public String toString() {
-	switch (type) {
-	    case "void": return "void";
-	    case "Boolean":
-	    case "boolean": return "bool";
-	    case "Byte":
-	    case "byte": return "char";
-	    case "Integer":
-	    case "int": return "int";
-	    case "Short":
-	    case "short": return "short";
-	    case "Long":
-	    case "long": return "long";
-	    case "Float":
-	    case "float": return "float";
-	    case "Double":
-	    case "double": return "double";
-	    case "String": return "NSString *";
-	    default: return String.format("%s *", type);
+		this.type = type.tsym.getSimpleName().toString();
 	}
-    }
+
+	@Override
+	public String toString() {
+		switch (type) {
+			case "void": return "void";
+			case "Boolean":
+			case "boolean": return "bool";
+			case "Byte":
+			case "byte": return "char";
+			case "Integer":
+			case "int": return "int";
+			case "Short":
+			case "short": return "short";
+			case "Long":
+			case "long": return "long";
+			case "Float":
+			case "float": return "float";
+			case "Double":
+			case "double": return "double";
+			case "String": return "NSString *";
+			default: return String.format("%s *", type);
+		}
+	}
 
 }

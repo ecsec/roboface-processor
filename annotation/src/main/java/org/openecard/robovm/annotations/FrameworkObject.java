@@ -36,9 +36,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface FrameworkObject {
 
-    /**
-     * Name of the factory function added to the ObjC header.
-     */
-    public String factoryMethod();
+	/**
+	 * Name of the factory function added to the ObjC header.
+	 */
+	public String factoryMethod();
 
 }
