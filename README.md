@@ -29,6 +29,14 @@ When using a maven setup, the compiler plugin and the dependencies should look a
 	<roboface.version>1.0.0</roboface.version>
 </properties>
 
+<repositories>
+	<repository>
+		<id>openecard-repos</id>
+		<name>Openecard Repos</name>
+		<url>https://mvn.ecsec.de/repository/openecard-public</url>
+	</repository>
+</repositories>
+
 <build>
 	<pluginManagement>
 		<plugins>
