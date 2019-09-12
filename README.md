@@ -21,6 +21,9 @@ The class of the annotation processor is `org.openecard.robovm.processor.Robofac
 fashion as an annotation processer. Also note that it is necessary to include `robovm-cocoatouch` and `robovm-rt` as
 dependencies or the compilation of the modified code will fail.
 
+The path an the name of the generated header can be controlled with the parameters `roboface.headerpath` and
+`roboface.headername` which can be given as `-A` options to javac.
+
 When using a maven setup, the compiler plugin and the dependencies should look as follows:
 
 ```XML
@@ -54,6 +57,9 @@ When using a maven setup, the compiler plugin and the dependencies should look a
 					<annotationProcessors>
 						<proc>org.openecard.robovm.processor.RobofaceProcessor</proc>
 					</annotationProcessors>
+					<compilerArgs>
+						<arg>-Aroboface.headername=my_robo_header.h</arg>
+					</compilerArgs>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -33,6 +33,9 @@
 						<annotationProcessors>
 							<proc>org.openecard.robovm.processor.RobofaceProcessor</proc>
 						</annotationProcessors>
+						<compilerArgs>
+							<arg>-Aroboface.headername=my_robo_header.h</arg>
+						</compilerArgs>
 						<debug>true</debug>
 						<debuglevel>source,lines,vars</debuglevel>
 						<showDeprecation>true</showDeprecation>

@@ -68,6 +68,15 @@ import org.openecard.robovm.annotations.FrameworkObject;
 //@AutoService(Processor.class)
 public class RobofaceProcessor extends AbstractProcessor {
 
+	// commandline options for use with -Aoption=...
+	public static final String HEADER_PATH = "roboface.headerpath";
+	public static final String HEADER_NAME = "roboface.headername";
+
+	// defaults for the options
+	public static final String HEADER_PATH_DEFAULT = "roboheaders";
+	public static final String HEADER_NAME_DEFAULT = "RoboFrameworkInterface.h";
+
+
 	private JavacProcessingEnvironment jcProcEnv;
 
 	private boolean firstPass;
@@ -251,8 +260,11 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 			if (! protoDefs.isEmpty()) {
 				try {
+					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
+					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
+					System.out.println(headerName);
 					HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
-					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, "roboheaders", "RoboFrameworkInterface.h");
+					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
