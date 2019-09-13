@@ -1,0 +1,7 @@
+framework module MyFrameworkProtocol{
+  umbrella header "RoboFrameworkInterface.h"
+
+  export *
+  module * { export * }
+}
+
