@@ -1,5 +1,5 @@
 framework module MyFrameworkProtocol{
-  umbrella header "RoboFrameworkInterface.h"
+  umbrella header "my_robo_header.h"
 
   export *
   module * { export * }
