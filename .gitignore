@@ -1,2 +1,10 @@
 target/
 jshell.history
+
+[syntax=glob]
+**.DS_Store
+**.sw*
+**.project
+**.prefs
+**.classpath
+**bin/
