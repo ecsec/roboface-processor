@@ -58,7 +58,7 @@ public class TypeDefinition {
 			case "Double":
 			case "double": return "double";
 			case "String": return "NSString *";
-			default: return String.format("%s *", type);
+			default: return String.format("NSObject<%s> *", type);
 		}
 	}
 
