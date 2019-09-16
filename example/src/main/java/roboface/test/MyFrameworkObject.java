@@ -34,7 +34,7 @@ public class MyFrameworkObject implements MyFrameworkProtocol {
 
 	@Override
 	public void bar(int foo, long bar, MyFrameworkProtocol self) {
-		throw new UnsupportedOperationException("Not intended for execution.");
+		System.out.println("bar");
 	}
 
 	@FrameworkObject(factoryMethod = "createSomeInnerObject")

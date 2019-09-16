@@ -45,8 +45,16 @@
 		<module>annotation</module>
 		<module>processor</module>
 		<module>example</module>
-		<module>frameworkexample</module>
 	</modules>
+
+	<profiles>
+		<profile>
+			<id>iOS</id>
+			<modules>
+				<module>frameworkexample</module>
+			</modules>
+		</profile>
+	</profiles>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
