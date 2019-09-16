@@ -22,16 +22,35 @@
 
 package roboface.test;
 
-import org.openecard.robovm.annotations.FrameworkInterface;
+import org.openecard.robovm.annotations.FrameworkObject;
 
 
 /**
  *
  * @author Tobias Wich
+ * @author Florian Otto
  */
-@FrameworkInterface
-public interface MyFrameworkProtocol {
-    
-	void bar(int foo, long bar, MyFrameworkProtocol self);
+
+@FrameworkObject(factoryMethod = "createFramework")
+public class MyFrameworkImplementation implements MyFrameworkInterface {
+
+	//some functions
+	public void fun(){
+		System.out.println("fun was called");
+	}
+	public void fun(String s){
+		System.out.println("overloaded fun was called given " + s);
+	}
+	public void otherfun(int i){
+		System.out.println("otherfun was called given " + i);
+	}
+
+	//getter for other implementations
+	public SomeInterface getSomeImp(){
+		return new SomeInterfaceImp();
+	}
+	public SomeInterface.SomeInnerInterface getSomeInnerImp(){
+		return new SomeInnerImp();
+	}
 
 }

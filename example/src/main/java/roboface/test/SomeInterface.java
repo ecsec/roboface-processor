@@ -28,14 +28,17 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 /**
  *
  * @author Tobias Wich
+ * @author Florian Otto
  */
-public interface SomeUnrelatedProtocol extends MyFrameworkProtocol {
+
+@FrameworkInterface
+public interface SomeInterface{
 
 	void someFun();
 
 	@FrameworkInterface
-	public interface InnerIface extends MyFrameworkProtocol {
-		void innerFun();
+	public interface SomeInnerInterface extends SomeInterface{
+		void someInnerFun();
 	}
 
 }

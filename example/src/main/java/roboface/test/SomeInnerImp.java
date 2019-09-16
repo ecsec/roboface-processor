@@ -22,34 +22,23 @@
 
 package roboface.test;
 
-import org.openecard.robovm.annotations.FrameworkObject;
+import org.robovm.apple.foundation.NSObject;
 
 
 /**
  *
- * @author Tobias Wich
+ * @author Florian Otto
  */
-@FrameworkObject(factoryMethod = "createSomeObject")
-public class MyFrameworkObject implements MyFrameworkProtocol {
 
-	@Override
-	public void bar(int foo, long bar, MyFrameworkProtocol self) {
-		throw new UnsupportedOperationException("Not intended for execution.");
-	}
+public class SomeInnerImp extends NSObject implements SomeInterface.SomeInnerInterface{
 
-	@FrameworkObject(factoryMethod = "createSomeInnerObject")
-	public static class Inner implements SomeUnrelatedProtocol.InnerIface {
-
-		@Override
-		public void bar(int foo, long bar, MyFrameworkProtocol self) {
-			throw new UnsupportedOperationException("Not intended for execution.");
-		}
-
-		@Override
-		public void innerFun() {
-			throw new UnsupportedOperationException("Not intended for execution.");
-		}
-
-	}
+    @Override
+    public void someFun(){
+        System.out.println("someFun was called from inner imp");
+    }
+    @Override
+    public void someInnerFun(){
+        System.out.println("someInnerFun was called");
+    }
 
 }
