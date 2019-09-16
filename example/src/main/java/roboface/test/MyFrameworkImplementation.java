@@ -31,7 +31,7 @@ import org.openecard.robovm.annotations.FrameworkObject;
  * @author Florian Otto
  */
 
-@FrameworkObject(factoryMethod = "createFramework")
+@FrameworkObject(factoryMethod = "getFrameworkInstance")
 public class MyFrameworkImplementation implements MyFrameworkInterface {
 
 	//some functions
