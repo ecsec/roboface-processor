@@ -57,6 +57,8 @@ public class HeaderGenerator {
 			w.println();
 			for (ObjectDefinition o : objects) {
 				writeObject(w, o);
+				//only create one object for framework entry
+				break; 
 			}
 		}
 	}
