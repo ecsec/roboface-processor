@@ -1,87 +1,76 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.openecard.tools</groupId>
-		<artifactId>roboface-parent</artifactId>
-		<version>1.0.0-rc.2-SNAPSHOT</version>
-	</parent>
-
+    <parent>
 	<groupId>org.openecard.tools</groupId>
-	<artifactId>roboface-frameworkexample</artifactId>
-	<packaging>jar</packaging>
+	<artifactId>roboface-parent</artifactId>
+	<version>1.0.0-rc.2-SNAPSHOT</version>
+    </parent>
 
-	<properties>
-		<robovm.version>2.3.8-SNAPSHOT</robovm.version>
-	</properties>
+    <groupId>org.openecard.tools</groupId>
+    <artifactId>roboface-frameworkexample</artifactId>
+    <name>Roboface iOS Framework Example</name>
+    <packaging>jar</packaging>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
-				<executions>
-					<execution>
-						<id>copy-framework-classes</id>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<configuration>
-							<includes>**</includes>
-							<outputDirectory>${basedir}/target/classes/</outputDirectory>
-						</configuration>
-					</execution>
-					<!--
-					<execution>
-						<id>copy-framework-headers</id>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<configuration>
-							<includes>roboheaders/**</includes>
-							<outputDirectory>${basedir}/target/classes/</outputDirectory>
-						</configuration>
-					</execution>
-					-->
-				</executions>
-			</plugin>
-             <plugin>
-                 <groupId>com.mobidevelop.robovm</groupId>
-                 <artifactId>robovm-maven-plugin</artifactId>
-                 <version>${robovm.version}</version>
-				 <executions>
-				 	<execution>
-					 	<goals>
-						 	<goal>install</goal>
-					 	</goals>
-						<phase>install</phase>
-				 	</execution>
-				 </executions>
-             </plugin>
+    <properties>
+	<robovm.version>2.3.8-SNAPSHOT</robovm.version>
+    </properties>
 
-		</plugins>
-	</build>
+    <build>
+	<plugins>
+	    <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-dependency-plugin</artifactId>
+		<version>3.1.1</version>
+		<executions>
+		    <execution>
+			<id>copy-framework-classes</id>
+			<goals>
+			    <goal>unpack-dependencies</goal>
+			</goals>
+			<configuration>
+			    <includes>**</includes>
+			    <outputDirectory>${basedir}/target/classes/</outputDirectory>
+			</configuration>
+		    </execution>
+		</executions>
+	    </plugin>
+	    <plugin>
+		<groupId>com.mobidevelop.robovm</groupId>
+		<artifactId>robovm-maven-plugin</artifactId>
+		<version>${robovm.version}</version>
+		<executions>
+		    <execution>
+			<goals>
+			    <goal>install</goal>
+			</goals>
+			<phase>install</phase>
+		    </execution>
+		</executions>
+	    </plugin>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.openecard.tools</groupId>
-			<artifactId>roboface-example</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+	</plugins>
+    </build>
 
-		<dependency>
-			<groupId>com.mobidevelop.robovm</groupId>
-			<artifactId>robovm-rt</artifactId>
-			<version>${robovm.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.mobidevelop.robovm</groupId>
-			<artifactId>robovm-cocoatouch</artifactId>
-			<version>${robovm.version}</version>
-			<scope>provided</scope>
-		</dependency>
-	</dependencies>
+    <dependencies>
+	<dependency>
+	    <groupId>org.openecard.tools</groupId>
+	    <artifactId>roboface-example</artifactId>
+	    <version>${project.version}</version>
+	</dependency>
+
+	<dependency>
+	    <groupId>com.mobidevelop.robovm</groupId>
+	    <artifactId>robovm-rt</artifactId>
+	    <version>${robovm.version}</version>
+	    <scope>provided</scope>
+	</dependency>
+	<dependency>
+	    <groupId>com.mobidevelop.robovm</groupId>
+	    <artifactId>robovm-cocoatouch</artifactId>
+	    <version>${robovm.version}</version>
+	    <scope>provided</scope>
+	</dependency>
+    </dependencies>
 
 </project>
