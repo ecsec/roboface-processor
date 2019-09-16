@@ -74,7 +74,7 @@ public class HeaderGenerator {
 
 	private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
 		String objcName = p.getObjcName();
-		w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		w.printf("@protocol %s", objcName);
 		// add protocol inheritance
 		if (! p.getExtensions().isEmpty()) {
