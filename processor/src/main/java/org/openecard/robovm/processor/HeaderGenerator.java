@@ -35,19 +35,26 @@ public class HeaderGenerator {
 
 	private final List<ProtocolDefinition> protocols;
 	private final List<ObjectDefinition> objects;
+	private final ForwardDecl fwDecl;
 
 	public HeaderGenerator(List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
 		this.protocols = protocols;
 		this.objects = objects;
+		this.fwDecl = new ForwardDecl(protocols);
 	}
 
 
 	public void writeHeader(Writer headerWriter) {
 		try (PrintWriter w = new PrintWriter(headerWriter)) {
 			writeFileHeader(w);
+			for (ProtocolDefinition p : fwDecl.getProtocols()) {
+				writeForwardDecl(w, p);
+			}
+			w.println();
 			for (ProtocolDefinition p : protocols) {
 				writeProtocol(w, p);
 			}
+			w.println();
 			for (ObjectDefinition o : objects) {
 				writeObject(w, o);
 			}
@@ -59,9 +66,15 @@ public class HeaderGenerator {
 		w.println();
 	}
 
+	private void writeForwardDecl(PrintWriter w, ProtocolDefinition p) {
+		String objcName = p.getObjcName();
+		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		w.printf("@protocol %s;%n", objcName);
+	}
+
 	private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
 		String objcName = p.getObjcName();
-		w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		w.printf("@protocol %s", objcName);
 		// add protocol inheritance
 		if (! p.getExtensions().isEmpty()) {

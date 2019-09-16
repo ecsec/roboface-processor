@@ -30,12 +30,14 @@ import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Attribute;
+import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
+import com.sun.tools.javac.util.Names;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -221,6 +223,29 @@ public class RobofaceProcessor extends AbstractProcessor {
 						JCTree.JCExpression exp = tm.Type(fwClass.asType());
 						// add type to tree
 						ccd.extending = exp;
+
+
+						// add instance method
+						{
+							Names names = Names.instance(jcProcEnv.getContext());
+
+							// define return type
+							JCTree.JCExpression returnType = tm.Type(fwClass.type);
+							// define instance creation
+							JCTree.JCNewClass newSt = tm.NewClass(null, com.sun.tools.javac.util.List.nil(),
+									tm.Type(ccd.sym.asType()), com.sun.tools.javac.util.List.nil(), null);
+							JCTree.JCReturn newRet = tm.Return(newSt);
+							// define method block
+							JCTree.JCBlock body = tm.Block(0, com.sun.tools.javac.util.List.of(newRet));
+							// stick method together
+							JCTree.JCMethodDecl instMeth = tm.MethodDef(tm.Modifiers(Flags.PUBLIC | Flags.STATIC),
+									names.fromString("instantiate"),
+									returnType, com.sun.tools.javac.util.List.nil(), com.sun.tools.javac.util.List.nil(),
+									com.sun.tools.javac.util.List.nil(),
+									body, null);
+
+							ccd.defs = ccd.defs.append(instMeth);
+						}
 					}
 				}
 
