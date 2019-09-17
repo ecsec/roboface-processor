@@ -36,9 +36,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface FrameworkEnum{
 
-	/**
-	 * Name of the value field in the enum.
-	 */
-	public String valueField();
-
 }
