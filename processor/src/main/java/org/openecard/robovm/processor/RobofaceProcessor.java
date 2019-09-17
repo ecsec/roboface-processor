@@ -226,7 +226,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 
 						// add instance method
-						if(factoryName != null && !factoryName.isEmpty())
 						{
 							Names names = Names.instance(jcProcEnv.getContext());
 
