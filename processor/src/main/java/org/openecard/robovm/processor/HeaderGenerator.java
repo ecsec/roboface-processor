@@ -57,8 +57,6 @@ public class HeaderGenerator {
 			w.println();
 			for (ObjectDefinition o : objects) {
 				writeObject(w, o);
-				//only create one object for framework entry
-				break; 
 			}
 		}
 	}
@@ -112,6 +110,9 @@ public class HeaderGenerator {
 
 	private void writeObject(PrintWriter w, ObjectDefinition o) {
 		String protocolName = o.getProtocolName(protocols);
+		if(o.getFactoryMethodName().isEmpty()){
+			return;
+		}
 		w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
 		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
