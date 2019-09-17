@@ -119,4 +119,13 @@ public class HeaderGenerator {
 		w.println();
 	}
 
+	private void writeEnum(PrintWriter w, EnumDefinition e){
+		w.printf("typedef NS_ENUM(NSUInteger, %s) {%n", e.getJavaName());
+		for(String v : e.getValues()){
+			w.printf("k%s%s,%n", e.getJavaName(), v);
+		}
+		w.println("};");
+		w.println();
+	}
+
 }
