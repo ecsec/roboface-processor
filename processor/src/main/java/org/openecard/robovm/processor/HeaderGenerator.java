@@ -33,11 +33,13 @@ import java.util.List;
  */
 public class HeaderGenerator {
 
+	private final List<EnumDefinition> enums;
 	private final List<ProtocolDefinition> protocols;
 	private final List<ObjectDefinition> objects;
 	private final ForwardDecl fwDecl;
 
-	public HeaderGenerator(List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
+	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
+		this.enums = enums;
 		this.protocols = protocols;
 		this.objects = objects;
 		this.fwDecl = new ForwardDecl(protocols);
@@ -47,6 +49,10 @@ public class HeaderGenerator {
 	public void writeHeader(Writer headerWriter) {
 		try (PrintWriter w = new PrintWriter(headerWriter)) {
 			writeFileHeader(w);
+			for (EnumDefinition e : enums) {
+				writeEnum(w, e);
+			}
+			w.println();
 			for (ProtocolDefinition p : fwDecl.getProtocols()) {
 				writeForwardDecl(w, p);
 			}

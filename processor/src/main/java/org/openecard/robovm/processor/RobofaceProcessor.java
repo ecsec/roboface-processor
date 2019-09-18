@@ -55,6 +55,7 @@ import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
+import org.openecard.robovm.annotations.FrameworkEnum;
 import org.openecard.robovm.annotations.FrameworkObject;
 
 
@@ -63,6 +64,7 @@ import org.openecard.robovm.annotations.FrameworkObject;
  * @author Tobias Wich
  */
 @SupportedAnnotationTypes({
+	"org.openecard.robovm.annotations.FrameworkEnum",
 	"org.openecard.robovm.annotations.FrameworkInterface",
 	"org.openecard.robovm.annotations.FrameworkObject"
 })
@@ -82,6 +84,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private JavacProcessingEnvironment jcProcEnv;
 
 	private boolean firstPass;
+	private List<EnumDefinition> enumDefs;
 	private List<ProtocolDefinition> protoDefs;
 	private List<ObjectDefinition> objDefs;
 
@@ -90,6 +93,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		super.init(processingEnv);
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
+		enumDefs = new ArrayList<>();
 		protoDefs = new ArrayList<>();
 		objDefs = new ArrayList<>();
 	}
@@ -105,7 +109,43 @@ public class RobofaceProcessor extends AbstractProcessor {
 		}
 
 		final Trees trees = Trees.instance(processingEnv);
-		final TreePathScanner<Object, CompilationUnitTree> ifaceScanner, objScanner;
+		final TreePathScanner<Object, CompilationUnitTree> enumScanner, ifaceScanner, objScanner;
+
+		enumScanner = new TreePathScanner<Object, CompilationUnitTree>() {
+
+			@Override
+			public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
+				if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
+					final JCCompilationUnit compilationUnit = (JCCompilationUnit) unitTree;
+					final JCTree.JCClassDecl ccd = (JCTree.JCClassDecl) classTree;
+
+					// Only process on files which have been compiled from source
+					if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE) {
+						String enumName = classTree.getSimpleName().toString();
+						System.out.println("Processing enum " + enumName);
+
+						// record type information for header generation
+						final EnumDefinition enumDef = new EnumDefinition(enumName);
+						enumDefs.add(enumDef);
+
+
+						for (JCTree next : ccd.getMembers()) {
+							if (next instanceof JCTree.JCVariableDecl) {
+								JCTree.JCVariableDecl decl = (JCTree.JCVariableDecl) next;
+								if (Flags.isEnum(decl.sym)) {
+									//System.out.println("next: " + decl.name);
+									enumDef.addValue(decl.name.toString());
+								}
+							}
+						}
+					}
+				}
+
+				return trees;
+			}
+		};
+
+
 
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -255,6 +295,20 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 
 		try {
+			for (final Element element : env.getElementsAnnotatedWith(FrameworkEnum.class)) {
+				if (element.getKind() == ElementKind.ENUM) {
+					processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
+							"@FrameworkEnum is being applied to an enum.", element);
+
+					final TreePath path = trees.getPath(element);
+					//processingEnv.getElementUtils().printElements(new OutputStreamWriter(System.out), element);
+					enumScanner.scan(path, path.getCompilationUnit());
+				} else {
+					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+							"@FrameworkEnum must only be applied to enums.", element);
+				}
+			}
+
 			for (final Element element : env.getElementsAnnotatedWith(FrameworkInterface.class)) {
 				if (element.getKind() == ElementKind.INTERFACE) {
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
@@ -288,7 +342,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					System.out.println(headerName);
-					HeaderGenerator h = new HeaderGenerator(protoDefs, objDefs);
+					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {

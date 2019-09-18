@@ -22,6 +22,8 @@
 
 package org.openecard.robovm.processor;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -35,13 +37,17 @@ public class EnumDefinition {
 	private final String javaName;
 	private final List<String> values;
 
-	public EnumDefinition(String javaName, List<String> values) {
+	public EnumDefinition(String javaName) {
 		this.javaName = javaName;
-		this.values = values;
+		this.values = new ArrayList<>();
 	}
-	
+
+	public void addValue(String val) {
+		values.add(val);
+	}
+
 	public List<String> getValues(){
-		return values;
+		return Collections.unmodifiableList(values);
 	}
 
 	public String getJavaName() {
