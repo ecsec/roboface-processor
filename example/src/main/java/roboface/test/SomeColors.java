@@ -22,23 +22,20 @@
 
 package roboface.test;
 
-import org.openecard.robovm.annotations.FrameworkInterface;
+import org.openecard.robovm.annotations.FrameworkEnum;
 
 
 /**
  *
  * @author Tobias Wich
- * @author Florian Otto
  */
+@FrameworkEnum
+public enum SomeColors {
 
-@FrameworkInterface
-public interface SomeInterface{
+	RED,
+	BLUE;
 
-	void someFun();
-
-	@FrameworkInterface
-	public interface SomeInnerInterface extends SomeInterface{
-		void someInnerFun(SomeColors c);
-	}
+	// this should not be included
+	public static SomeColors foo;
 
 }

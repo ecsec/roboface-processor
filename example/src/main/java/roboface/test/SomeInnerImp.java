@@ -37,7 +37,7 @@ public class SomeInnerImp extends NSObject implements SomeInterface.SomeInnerInt
         System.out.println("someFun was called from inner imp");
     }
     @Override
-    public void someInnerFun(){
+    public void someInnerFun(SomeColors c){
         System.out.println("someInnerFun was called");
     }
 
