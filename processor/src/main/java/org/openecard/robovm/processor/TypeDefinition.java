@@ -31,15 +31,25 @@ import com.sun.tools.javac.code.Type;
  */
 public class TypeDefinition {
 
-	private final String type;
+	private final String iosType;
+	private final String rawType;
 
-	public TypeDefinition(String type) {
-		this.type = type;
+	public TypeDefinition(String rawType, String iosType) {
+		this.rawType = rawType;
+		this.iosType = iosType;
 	}
 
 	@Override
 	public String toString() {
-		return type;
+		return iosType;
+	}
+
+	public String getIosType() {
+		return iosType;
+	}
+
+	public String getRawType() {
+		return rawType;
 	}
 
 	public static TypeDefinition from(Type type) {
@@ -48,9 +58,10 @@ public class TypeDefinition {
 
 			TypeDefinition innerType = from(elemtype);
 
-			return new TypeDefinition(String.format("NSArray<%s> *", innerType));
+			return new TypeDefinition(type.tsym.getQualifiedName().toString(), String.format("NSArray<%s> *", innerType));
 		} else {
-			return new TypeDefinition(convertSimpleType(type.tsym.getSimpleName().toString()));
+			String simpleName = type.tsym.getSimpleName().toString();
+			return new TypeDefinition(simpleName, convertSimpleType(simpleName));
 		}
 	}
 

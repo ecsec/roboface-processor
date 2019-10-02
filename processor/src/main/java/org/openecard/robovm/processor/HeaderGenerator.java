@@ -24,7 +24,9 @@ package org.openecard.robovm.processor;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -34,6 +36,7 @@ import java.util.List;
 public class HeaderGenerator {
 
 	private final List<EnumDefinition> enums;
+	private final Map<String, EnumDefinition> enumsByName;
 	private final List<ProtocolDefinition> protocols;
 	private final List<ObjectDefinition> objects;
 	private final ForwardDecl fwDecl;
@@ -45,6 +48,10 @@ public class HeaderGenerator {
 		this.objects = objects;
 		this.includes = includes;
 		this.fwDecl = new ForwardDecl(protocols);
+		this.enumsByName = new HashMap<>(enums.size());
+		for (EnumDefinition currentEnum : enums) {
+			this.enumsByName.put(currentEnum.getJavaName(), currentEnum);
+		}
 	}
 
 
@@ -112,7 +119,7 @@ public class HeaderGenerator {
 	}
 
 	private void writeMethod(PrintWriter w, MethodDefinition md) {
-		w.printf("-(%s) %s", md.getReturnType(), md.getName());
+		w.printf("-(%s) %s", effectiveParameterType(md.getReturnType()), md.getName());
 		if (! md.getParameters().isEmpty()) {
 			boolean isFirstParameter = true;
 			for (MethodParameter mp : md.getParameters()) {
@@ -123,7 +130,7 @@ public class HeaderGenerator {
 					String paramName = mp.getName();
 					char firstCharacter = paramName.charAt(0);
 					String remainingChar = paramName.substring(1);
-					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, mp.getType(), mp.getName());
+					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType(mp.getType()), mp.getName());
 				}
 			}
 		}
@@ -153,4 +160,12 @@ public class HeaderGenerator {
 
 	}
 
+	private String effectiveParameterType(TypeDefinition typeDef) {
+		EnumDefinition foundEnum = this.enumsByName.get(typeDef.getRawType());
+		if (foundEnum != null) {
+			return foundEnum.getJavaName();
+		} else {
+			return typeDef.getIosType();
+		}
+	}
 }
