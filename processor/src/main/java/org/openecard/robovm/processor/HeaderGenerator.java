@@ -37,11 +37,13 @@ public class HeaderGenerator {
 	private final List<ProtocolDefinition> protocols;
 	private final List<ObjectDefinition> objects;
 	private final ForwardDecl fwDecl;
+	private final List<IncludeHeaderDefinition> includes;
 
-	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects) {
+	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes) {
 		this.enums = enums;
 		this.protocols = protocols;
 		this.objects = objects;
+		this.includes = includes;
 		this.fwDecl = new ForwardDecl(protocols);
 	}
 
@@ -49,6 +51,10 @@ public class HeaderGenerator {
 	public void writeHeader(Writer headerWriter) {
 		try (PrintWriter w = new PrintWriter(headerWriter)) {
 			writeFileHeader(w);
+			for (IncludeHeaderDefinition include: includes) {
+				writeInclude(w, include);
+			}
+
 			for (EnumDefinition e : enums) {
 				writeEnum(w, e);
 			}
@@ -64,7 +70,7 @@ public class HeaderGenerator {
 			for (ObjectDefinition o : objects) {
 				writeObject(w, o);
 				//only create one object for framework entry
-				break; 
+				break;
 			}
 		}
 	}
@@ -132,6 +138,11 @@ public class HeaderGenerator {
 		}
 		w.println("};");
 		w.println();
+	}
+
+	private void writeInclude(PrintWriter w, IncludeHeaderDefinition include) {
+		w.printf("#import \"%s\"", include);
+
 	}
 
 }

@@ -1,4 +1,4 @@
-/****************************************************************************
+/** **************************************************************************
  * Copyright (C) 2019 ecsec GmbH.
  * All rights reserved.
  * Contact: ecsec GmbH (info@ecsec.de)
@@ -18,11 +18,9 @@
  * and conditions contained in a signed written agreement between
  * you and ecsec GmbH.
  *
- ***************************************************************************/
-
+ ************************************************************************** */
 package org.openecard.robovm.processor;
 
-import org.openecard.robovm.annotations.FrameworkInterface;
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.Tree;
@@ -56,8 +54,8 @@ import javax.tools.FileObject;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 import org.openecard.robovm.annotations.FrameworkEnum;
+import org.openecard.robovm.annotations.FrameworkInterface;
 import org.openecard.robovm.annotations.FrameworkObject;
-
 
 /**
  *
@@ -75,11 +73,11 @@ public class RobofaceProcessor extends AbstractProcessor {
 	// commandline options for use with -Aoption=...
 	public static final String HEADER_PATH = "roboface.headerpath";
 	public static final String HEADER_NAME = "roboface.headername";
+	public static final String INCLUDE_HEADERS = "roboface.include.headers";
 
 	// defaults for the options
 	public static final String HEADER_PATH_DEFAULT = "roboheaders";
 	public static final String HEADER_NAME_DEFAULT = "RoboFrameworkInterface.h";
-
 
 	private JavacProcessingEnvironment jcProcEnv;
 
@@ -128,7 +126,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final EnumDefinition enumDef = new EnumDefinition(enumName);
 						enumDefs.add(enumDef);
 
-
 						for (JCTree next : ccd.getMembers()) {
 							if (next instanceof JCTree.JCVariableDecl) {
 								JCTree.JCVariableDecl decl = (JCTree.JCVariableDecl) next;
@@ -144,8 +141,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 				return trees;
 			}
 		};
-
-
 
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -164,14 +159,12 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ProtocolDefinition protoDef = new ProtocolDefinition(ifaceName, ccd.implementing);
 						protoDefs.add(protoDef);
 
-						
 						// create ObjCProtocol type
 						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObjectProtocol");
 						JCTree.JCExpression exp = tm.Type(fwClass.asType());
 						// add type to tree
 						ccd.implementing = ccd.implementing.append(exp);
-
 
 						// find methods in this interface and add @Method annotation
 						ccd.accept(new TreeTranslator() {
@@ -214,7 +207,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 			}
 		};
 
-
 		objScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
 			@Override
@@ -256,14 +248,12 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, ifaces);
 						objDefs.add(objDef);
 
-
 						// create ObjCProtocol type
 						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
 						JCTree.JCExpression exp = tm.Type(fwClass.asType());
 						// add type to tree
 						ccd.extending = exp;
-
 
 						// add instance method
 						{
@@ -292,7 +282,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 				return trees;
 			}
 		};
-
 
 		try {
 			for (final Element element : env.getElementsAnnotatedWith(FrameworkEnum.class)) {
@@ -337,12 +326,13 @@ public class RobofaceProcessor extends AbstractProcessor {
 				}
 			}
 
-			if (! protoDefs.isEmpty()) {
+			if (!protoDefs.isEmpty()) {
 				try {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
+					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
 					System.out.println(headerName);
-					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs);
+					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs, includeHeaders);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
@@ -358,4 +348,17 @@ public class RobofaceProcessor extends AbstractProcessor {
 		return true;
 	}
 
+	private List<IncludeHeaderDefinition> getIncludeHeaders() {
+
+		String headerIncludes = processingEnv.getOptions().getOrDefault(INCLUDE_HEADERS, "");
+		List<IncludeHeaderDefinition> result = new ArrayList<>();
+
+		for (String rawPath : headerIncludes.split(";")) {
+			String trimmedPath = rawPath.trim();
+			if (!trimmedPath.isBlank()) {
+				result.add(new IncludeHeaderDefinition(trimmedPath));
+			}
+		}
+		return result;
+	}
 }
