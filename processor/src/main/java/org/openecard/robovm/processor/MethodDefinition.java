@@ -40,7 +40,7 @@ public class MethodDefinition {
 
 	public MethodDefinition(String name, Type returnType) {
 		this.name = name;
-		this.returnType = new TypeDefinition(returnType);
+		this.returnType = TypeDefinition.from(returnType);
 		this.params = new ArrayList<>();
 	}
 

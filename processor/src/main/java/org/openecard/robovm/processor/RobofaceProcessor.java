@@ -30,6 +30,7 @@ import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Symbol;
+import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
@@ -159,6 +160,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ProtocolDefinition protoDef = new ProtocolDefinition(ifaceName, ccd.implementing);
 						protoDefs.add(protoDef);
 
+
 						// create ObjCProtocol type
 						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObjectProtocol");
@@ -187,8 +189,14 @@ public class RobofaceProcessor extends AbstractProcessor {
 										tree.getReturnType().type);
 								protoDef.addMethod(md);
 								for (JCTree.JCVariableDecl paramDecl : tree.params) {
+									Type parameterType = paramDecl.getType().type;
+									if (parameterType instanceof Type.ArrayType) {
+										// TODO: investigate if changing parameter type is necessary.
+										Symbol.ClassSymbol nsArrayClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSArray");
+
+									}
 									MethodParameter mp = new MethodParameter(paramDecl.name.toString(),
-											paramDecl.getType().type);
+										parameterType);
 									md.addParam(mp);
 								}
 
@@ -197,6 +205,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 								Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
 								JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(fwClass.asType(), com.sun.tools.javac.util.List.nil()));
 								tree.mods.annotations = tree.mods.annotations.append(at);
+
 							}
 						});
 

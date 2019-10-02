@@ -36,7 +36,7 @@ public class MethodParameter {
 
 	public MethodParameter(String name, Type type) {
 		this.name = name;
-		this.type = new TypeDefinition(type);
+		this.type = TypeDefinition.from(type);
 	}
 
 	public TypeDefinition getType() {

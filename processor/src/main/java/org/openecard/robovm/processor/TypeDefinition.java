@@ -33,14 +33,28 @@ public class TypeDefinition {
 
 	private final String type;
 
-	public TypeDefinition(Type type) {
-//	System.out.println(type);
-//	System.out.println(type.tsym.getSimpleName().toString());
-		this.type = type.tsym.getSimpleName().toString();
+	public TypeDefinition(String type) {
+		this.type = type;
 	}
 
 	@Override
 	public String toString() {
+		return type;
+	}
+
+	public static TypeDefinition from(Type type) {
+		if (type instanceof Type.ArrayType) {
+			Type elemtype = ((Type.ArrayType)type).elemtype;
+
+			TypeDefinition innerType = from(elemtype);
+
+			return new TypeDefinition(String.format("NSArray<%s> *", innerType));
+		} else {
+			return new TypeDefinition(convertSimpleType(type.tsym.getSimpleName().toString()));
+		}
+	}
+
+	private static String convertSimpleType(String type) {
 		switch (type) {
 			case "void": return "void";
 			case "Boolean":
@@ -61,5 +75,4 @@ public class TypeDefinition {
 			default: return String.format("NSObject<%s> *", type);
 		}
 	}
-
 }
