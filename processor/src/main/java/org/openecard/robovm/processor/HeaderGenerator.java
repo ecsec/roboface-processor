@@ -114,9 +114,17 @@ public class HeaderGenerator {
 	private void writeMethod(PrintWriter w, MethodDefinition md) {
 		w.printf("-(%s) %s", md.getReturnType(), md.getName());
 		if (! md.getParameters().isEmpty()) {
-			String prefix = ": ";
+			boolean isFirstParameter = true;
 			for (MethodParameter mp : md.getParameters()) {
-				w.printf("%s(%s) %s", prefix, mp.getType(), mp.getName());
+				if (isFirstParameter) {
+					w.printf(":(%s)%s", mp.getType(), mp.getName());
+					isFirstParameter = false;
+				} else {
+					String paramName = mp.getName();
+					char firstCharacter = paramName.charAt(0);
+					String remainingChar = paramName.substring(1);
+					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, mp.getType(), mp.getName());
+				}
 			}
 		}
 		w.println(";");
