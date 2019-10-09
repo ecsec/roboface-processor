@@ -34,7 +34,11 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeInterface{
 
-	void someFun();
+	void simpleFun();
+
+	void someFun(SomeEnum nameOfFirstParameter, String nameOfSecondParameter);
+
+	SomeEnum giveEnumBack();
 
 	@FrameworkInterface
 	public interface SomeInnerInterface extends SomeInterface{

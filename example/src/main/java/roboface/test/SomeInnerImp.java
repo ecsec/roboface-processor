@@ -33,12 +33,23 @@ import org.robovm.apple.foundation.NSObject;
 public class SomeInnerImp extends NSObject implements SomeInterface.SomeInnerInterface{
 
     @Override
-    public void someFun(){
-        System.out.println("someFun was called from inner imp");
-    }
-    @Override
     public void someInnerFun(SomeColors c){
         System.out.println("someInnerFun was called");
     }
+
+	@Override
+	public void simpleFun() {
+        System.out.println("simpleFun was called from inner imp");
+	}
+
+	@Override
+	public void someFun(SomeEnum nameOfFirstParameter, String nameOfSecondParameter) {
+		System.out.printf("someFun was called from inner imp with params [%s;%s]", nameOfFirstParameter, nameOfSecondParameter);
+	}
+
+	@Override
+	public SomeEnum giveEnumBack() {
+		return SomeEnum.LastValue;
+	}
 
 }

@@ -19,32 +19,19 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
-
 package roboface.test;
 
-import org.robovm.apple.foundation.NSObject;
-
+import org.openecard.robovm.annotations.FrameworkEnum;
 
 /**
  *
- * @author Florian Otto
+ * @author Neil Crossley
  */
+@FrameworkEnum
+public enum SomeEnum {
 
-public class SomeInterfaceImp extends NSObject implements SomeInterface{
-
-	@Override
-	public void simpleFun() {
-        System.out.println("someFun was called");
-	}
-
-	@Override
-	public void someFun(SomeEnum nameOfFirstParameter, String nameOfSecondParameter) {
-		System.out.printf("someFun was called with params [%s;%s]", nameOfFirstParameter, nameOfSecondParameter);
-	}
-
-	@Override
-	public SomeEnum giveEnumBack() {
-		return SomeEnum.SecondValue;
-	}
-
+	FirstValue,
+	SecondValue,
+	ThirdValue,
+	LastValue,
 }
