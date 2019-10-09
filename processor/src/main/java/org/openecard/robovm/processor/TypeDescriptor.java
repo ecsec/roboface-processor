@@ -19,25 +19,13 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
-
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
-
+package org.openecard.robovm.processor;
 
 /**
  *
- * @author Tobias Wich
- * @author Florian Otto
+ * @author Neil Crossley
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+public interface TypeDescriptor {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
-
-	SomeArrayEvaluator arrayUsageExample();
+	String getIosType();
 }

@@ -86,6 +86,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private List<EnumDefinition> enumDefs;
 	private List<ProtocolDefinition> protoDefs;
 	private List<ObjectDefinition> objDefs;
+	private TypeDescriptorRegistry registry;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -95,6 +96,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		enumDefs = new ArrayList<>();
 		protoDefs = new ArrayList<>();
 		objDefs = new ArrayList<>();
+		registry = new TypeDescriptorRegistry();
 	}
 
 	@Override
@@ -127,12 +129,15 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final EnumDefinition enumDef = new EnumDefinition(enumName);
 						enumDefs.add(enumDef);
 
+						final EnumDescriptor enumDesc = registry.createEnumDescriptor(ccd.sym.type);
+
 						for (JCTree next : ccd.getMembers()) {
 							if (next instanceof JCTree.JCVariableDecl) {
 								JCTree.JCVariableDecl decl = (JCTree.JCVariableDecl) next;
 								if (Flags.isEnum(decl.sym)) {
 									//System.out.println("next: " + decl.name);
 									enumDef.addValue(decl.name.toString());
+									enumDesc.addValue(decl.name.toString());
 								}
 							}
 						}
@@ -160,6 +165,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ProtocolDefinition protoDef = new ProtocolDefinition(ifaceName, ccd.implementing);
 						protoDefs.add(protoDef);
 
+						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd);
 
 						// create ObjCProtocol type
 						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
@@ -188,16 +194,23 @@ public class RobofaceProcessor extends AbstractProcessor {
 								MethodDefinition md = new MethodDefinition(tree.name.toString(),
 										tree.getReturnType().type);
 								protoDef.addMethod(md);
+
+								final MethodDescriptor methodDescriptor = registry.createMethodDescriptor(
+										tree.name.toString(),
+										tree.getReturnType().type);
+								protoDesc.addMethod(methodDescriptor);
+
 								for (JCTree.JCVariableDecl paramDecl : tree.params) {
 									Type parameterType = paramDecl.getType().type;
-									if (parameterType instanceof Type.ArrayType) {
-										// TODO: investigate if changing parameter type is necessary.
-										Symbol.ClassSymbol nsArrayClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSArray");
-
-									}
+									
 									MethodParameter mp = new MethodParameter(paramDecl.name.toString(),
 										parameterType);
 									md.addParam(mp);
+
+									final MethodParameterDescriptor methodParamDescr = registry.createMethodParameterDescriptor(
+											paramDecl.name.toString(),
+											parameterType);
+									methodDescriptor.addParam(methodParamDescr);
 								}
 
 								// create @Method type
@@ -341,7 +354,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
 					System.out.println(headerName);
-					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs, includeHeaders);
+					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs, includeHeaders, registry);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {

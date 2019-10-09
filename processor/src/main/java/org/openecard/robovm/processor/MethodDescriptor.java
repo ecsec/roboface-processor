@@ -20,24 +20,43 @@
  *
  ***************************************************************************/
 
-package roboface.test;
+package org.openecard.robovm.processor;
 
-import org.openecard.robovm.annotations.FrameworkInterface;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
  *
  * @author Tobias Wich
- * @author Florian Otto
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+public class MethodDescriptor {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
+	private final String name;
+	private final TypeDescriptor returnType;
+	private final ArrayList<MethodParameterDescriptor> params;
 
-	SomeArrayEvaluator arrayUsageExample();
+	public MethodDescriptor(String name, TypeDescriptor returnType) {
+		this.name = name;
+		this.returnType = returnType;
+		this.params = new ArrayList<>();
+	}
+
+	public void addParam(MethodParameterDescriptor param) {
+		this.params.add(param);
+	}
+
+	public List<MethodParameterDescriptor> getParameters() {
+		return Collections.unmodifiableList(params);
+	}
+
+	public TypeDescriptor getReturnType() {
+		return returnType;
+	}
+
+	public String getName() {
+		return name;
+	}
+
 }

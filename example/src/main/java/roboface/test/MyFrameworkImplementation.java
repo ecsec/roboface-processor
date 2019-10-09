@@ -53,4 +53,9 @@ public class MyFrameworkImplementation implements MyFrameworkInterface {
 		return new SomeInnerImp();
 	}
 
+	@Override
+	public SomeArrayEvaluator arrayUsageExample() {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
 }

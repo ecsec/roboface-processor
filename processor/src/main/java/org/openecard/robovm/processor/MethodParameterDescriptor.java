@@ -20,24 +20,29 @@
  *
  ***************************************************************************/
 
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
+package org.openecard.robovm.processor;
 
 
 /**
  *
  * @author Tobias Wich
- * @author Florian Otto
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+public class MethodParameterDescriptor {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
+	private final String name;
+	private final TypeDescriptor type;
 
-	SomeArrayEvaluator arrayUsageExample();
+	public MethodParameterDescriptor(String name, TypeDescriptor type) {
+		this.name = name;
+		this.type = type;
+	}
+
+	public TypeDescriptor getType() {
+		return type;
+	}
+
+	public String getName() {
+		return name;
+	}
+
 }

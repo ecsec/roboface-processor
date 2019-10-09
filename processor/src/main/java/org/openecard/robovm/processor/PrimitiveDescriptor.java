@@ -19,25 +19,25 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
+package org.openecard.robovm.processor;
 
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
-
+import com.sun.tools.javac.code.Type;
 
 /**
  *
- * @author Tobias Wich
- * @author Florian Otto
+ * @author Neil Crossley
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+public class PrimitiveDescriptor implements TypeDescriptor {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
+	private final String iosType;
+	private final Type type;
 
-	SomeArrayEvaluator arrayUsageExample();
+	public PrimitiveDescriptor(Type type, String iosType) {
+		this.type = type;
+		this.iosType = iosType;
+	}
+
+	public String getIosType() {
+		return iosType;
+	}
 }

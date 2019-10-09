@@ -19,25 +19,23 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
-
 package roboface.test;
 
+import java.util.List;
 import org.openecard.robovm.annotations.FrameworkInterface;
-
 
 /**
  *
- * @author Tobias Wich
- * @author Florian Otto
+ * @author Neil Crossley
  */
 @FrameworkInterface
-public interface MyFrameworkInterface {
+public interface SomeArrayEvaluator {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
+	List<String> provideStrings();
 
-	SomeArrayEvaluator arrayUsageExample();
+	void acceptListIntegers(List<Integer> ints);
+
+	void acceptSomeEnums(List<SomeEnum> enums);
+
+	List<SomeEnum> provideSomeEnums();
 }

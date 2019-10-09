@@ -24,6 +24,7 @@ package org.openecard.robovm.processor;
 
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,14 +42,16 @@ public class HeaderGenerator {
 	private final List<ObjectDefinition> objects;
 	private final ForwardDecl fwDecl;
 	private final List<IncludeHeaderDefinition> includes;
+	private final TypeDescriptorRegistry registry;
 
-	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes) {
+	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeDescriptorRegistry registry) {
 		this.enums = enums;
 		this.protocols = protocols;
 		this.objects = objects;
 		this.includes = includes;
 		this.fwDecl = new ForwardDecl(protocols);
 		this.enumsByName = new HashMap<>(enums.size());
+		this.registry = registry;
 		for (EnumDefinition currentEnum : enums) {
 			this.enumsByName.put(currentEnum.getJavaName(), currentEnum);
 		}
@@ -65,7 +68,18 @@ public class HeaderGenerator {
 				writeEnum(w, e);
 			}
 			w.println();
+
+			for (EnumDescriptor e : registry.getEnums()) {
+				writeEnum(w, e);
+			}
+			w.println();
+
 			for (ProtocolDefinition p : fwDecl.getProtocols()) {
+				writeForwardDecl(w, p);
+			}
+			w.println();
+
+			for (ProtocolDescriptor p : sortProtocols(registry.getProtocols())) {
 				writeForwardDecl(w, p);
 			}
 			w.println();
@@ -73,6 +87,11 @@ public class HeaderGenerator {
 				writeProtocol(w, p);
 			}
 			w.println();
+			for (ProtocolDescriptor p : registry.getProtocols()) {
+				writeProtocol(w, p);
+			}
+			w.println();
+
 			for (ObjectDefinition o : objects) {
 				writeObject(w, o);
 				//only create one object for framework entry
@@ -101,6 +120,11 @@ public class HeaderGenerator {
 		w.printf("@protocol %s;%n", objcName);
 	}
 
+	private void writeForwardDecl(PrintWriter w, TypeDescriptor p) {
+		String objcName = p.getIosType();
+		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		w.printf("@protocol %s;%n", objcName);
+	}
 	private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
@@ -125,20 +149,64 @@ public class HeaderGenerator {
 		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
 		w.println();
 	}
+	private void writeProtocol(PrintWriter w, ProtocolDescriptor p) {
+		String objcName = p.getObjcName();
+		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
+		w.printf("@protocol %s", objcName);
+		// add protocol inheritance
+		if (! p.getExtensions().isEmpty()) {
+			w.print("<");
+			String prefix = "";
+			for (String ext : p.getExtensions()) {
+				w.printf("%s%s", prefix, ext);
+				ext = ", ";
+			}
+			w.print(">");
+		}
+		w.println();
+
+		for (MethodDescriptor md : p.getMethods()) {
+			writeMethod(w, md);
+		}
+
+		w.println("@end");
+		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		w.println();
+	}
 
 	private void writeMethod(PrintWriter w, MethodDefinition md) {
 		w.printf("-(%s) %s", effectiveParameterType(md.getReturnType()), md.getName());
 		if (! md.getParameters().isEmpty()) {
 			boolean isFirstParameter = true;
 			for (MethodParameter mp : md.getParameters()) {
+				final String effectiveParameterType = effectiveParameterType(mp.getType());
+				final String paramName = mp.getName();
 				if (isFirstParameter) {
-					w.printf(":(%s)%s", mp.getType(), mp.getName());
+					w.printf(":(%s)%s", effectiveParameterType, paramName);
 					isFirstParameter = false;
 				} else {
-					String paramName = mp.getName();
 					char firstCharacter = Character.toUpperCase(paramName.charAt(0));
 					String remainingChar = paramName.substring(1);
-					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType(mp.getType()), mp.getName());
+					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
+				}
+			}
+		}
+		w.println(";");
+	}
+	private void writeMethod(PrintWriter w, MethodDescriptor md) {
+		w.printf("-(%s) %s", md.getReturnType().getIosType(), md.getName());
+		if (! md.getParameters().isEmpty()) {
+			boolean isFirstParameter = true;
+			for (MethodParameterDescriptor mp : md.getParameters()) {
+				final String effectiveParameterType = mp.getType().getIosType();
+				final String paramName = mp.getName();
+				if (isFirstParameter) {
+					w.printf(":(%s)%s", effectiveParameterType, paramName);
+					isFirstParameter = false;
+				} else {
+					char firstCharacter = Character.toUpperCase(paramName.charAt(0));
+					String remainingChar = paramName.substring(1);
+					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
 				}
 			}
 		}
@@ -163,6 +231,15 @@ public class HeaderGenerator {
 		w.println();
 	}
 
+	private void writeEnum(PrintWriter w, EnumDescriptor e){
+		w.printf("typedef NS_ENUM(NSUInteger, %s) {%n", e.getJavaName());
+		for(String v : e.getValues()){
+			w.printf("k%s%s,%n", e.getJavaName(), v);
+		}
+		w.println("};");
+		w.println();
+	}
+
 	private void writeInclude(PrintWriter w, IncludeHeaderDefinition include) {
 		w.printf("#import \"%s\"", include);
 		w.println();
@@ -176,5 +253,37 @@ public class HeaderGenerator {
 		} else {
 			return typeDef.getIosType();
 		}
+	}
+
+
+	private List<ProtocolDescriptor> sortProtocols(List<ProtocolDescriptor> input) {
+		List<ProtocolDescriptor> protocols = new ArrayList<>(input.size());
+		for (ProtocolDescriptor next : input) {
+			if (next.getExtensions().isEmpty()) {
+				// no dependency, insert at the beginning right away
+				protocols.add(0, next);
+			} else {
+				// we want to insert this element after the last element of the extension list
+				// or if something is missing, insert it at the foremost position, so that a later insertion will if in
+				// doubt precede the missing element
+				int idx = 0;
+				List<String> extensions = new ArrayList<>(next.getExtensions());
+				for (int i = 0; i < protocols.size(); i++) {
+					ProtocolDescriptor testObj = protocols.get(i);
+					// remove and see if an element has been removed actually
+					if (extensions.remove(testObj.getObjcName())) {
+						// advance insertion index to the position after this element
+						idx = i + 1;
+					}
+					// stop if there is nothing left
+					if (extensions.isEmpty()) {
+						break;
+					}
+				}
+				// add the element at the correct psoition
+				protocols.add(idx, next);
+			}
+		}
+		return protocols;
 	}
 }

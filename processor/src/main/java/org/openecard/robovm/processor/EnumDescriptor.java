@@ -19,25 +19,40 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
+package org.openecard.robovm.processor;
 
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  *
- * @author Tobias Wich
- * @author Florian Otto
+ * @author Neil Crossley
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+public class EnumDescriptor implements TypeDescriptor {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
+	private final String javaName;
+	private final List<String> values;
 
-	SomeArrayEvaluator arrayUsageExample();
+	public EnumDescriptor(String javaName) {
+		this.javaName = javaName;
+		this.values = new ArrayList<>();
+	}
+
+	public void addValue(String val) {
+		values.add(val);
+	}
+
+	public List<String> getValues(){
+		return Collections.unmodifiableList(values);
+	}
+
+	public String getJavaName() {
+		return javaName;
+	}
+
+	@Override
+	public String getIosType() {
+		return this.getJavaName();
+	}
 }
