@@ -58,9 +58,8 @@ public class HeaderGenerator {
 	public void writeHeader(Writer headerWriter) {
 		try (PrintWriter w = new PrintWriter(headerWriter)) {
 			writeFileHeader(w);
-			for (IncludeHeaderDefinition include: includes) {
-				writeInclude(w, include);
-			}
+
+			writeIncludes(w);
 
 			for (EnumDefinition e : enums) {
 				writeEnum(w, e);
@@ -79,6 +78,15 @@ public class HeaderGenerator {
 				//only create one object for framework entry
 				break;
 			}
+		}
+	}
+
+	private void writeIncludes(final PrintWriter w) {
+		for (IncludeHeaderDefinition include: includes) {
+			writeInclude(w, include);
+		}
+		if (!includes.isEmpty()) {
+			w.println();
 		}
 	}
 
@@ -157,6 +165,7 @@ public class HeaderGenerator {
 
 	private void writeInclude(PrintWriter w, IncludeHeaderDefinition include) {
 		w.printf("#import \"%s\"", include);
+		w.println();
 
 	}
 

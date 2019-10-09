@@ -35,6 +35,7 @@
 						</annotationProcessors>
 						<compilerArgs>
 							<arg>-Aroboface.headername=my_robo_header.h</arg>
+							<arg>-Aroboface.include.headers=my_dependency.h;my_other_dependency.h</arg>
 						</compilerArgs>
 						<debug>true</debug>
 						<debuglevel>source,lines,vars</debuglevel>
