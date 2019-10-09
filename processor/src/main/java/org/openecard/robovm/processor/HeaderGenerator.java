@@ -136,7 +136,7 @@ public class HeaderGenerator {
 					isFirstParameter = false;
 				} else {
 					String paramName = mp.getName();
-					char firstCharacter = paramName.charAt(0);
+					char firstCharacter = Character.toUpperCase(paramName.charAt(0));
 					String remainingChar = paramName.substring(1);
 					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType(mp.getType()), mp.getName());
 				}
