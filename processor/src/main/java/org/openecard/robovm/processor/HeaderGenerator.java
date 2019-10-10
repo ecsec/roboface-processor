@@ -25,9 +25,7 @@ package org.openecard.robovm.processor;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -36,27 +34,15 @@ import java.util.Map;
  */
 public class HeaderGenerator {
 
-	private final List<EnumDefinition> enums;
-	private final Map<String, EnumDefinition> enumsByName;
-	private final List<ProtocolDefinition> protocols;
 	private final List<ObjectDefinition> objects;
-	private final ForwardDecl fwDecl;
 	private final List<IncludeHeaderDefinition> includes;
 	private final TypeDescriptorRegistry registry;
 
-	public HeaderGenerator(List<EnumDefinition> enums, List<ProtocolDefinition> protocols, List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeDescriptorRegistry registry) {
-		this.enums = enums;
-		this.protocols = protocols;
+	public HeaderGenerator(List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeDescriptorRegistry registry) {
 		this.objects = objects;
 		this.includes = includes;
-		this.fwDecl = new ForwardDecl(protocols);
-		this.enumsByName = new HashMap<>(enums.size());
 		this.registry = registry;
-		for (EnumDefinition currentEnum : enums) {
-			this.enumsByName.put(currentEnum.getJavaName(), currentEnum);
-		}
 	}
-
 
 	public void writeHeader(Writer headerWriter) {
 		try (PrintWriter w = new PrintWriter(headerWriter)) {
@@ -64,18 +50,8 @@ public class HeaderGenerator {
 
 			writeIncludes(w);
 
-			for (EnumDefinition e : enums) {
-				writeEnum(w, e);
-			}
-			w.println();
-
 			for (EnumDescriptor e : registry.getEnums()) {
 				writeEnum(w, e);
-			}
-			w.println();
-
-			for (ProtocolDefinition p : fwDecl.getProtocols()) {
-				writeForwardDecl(w, p);
 			}
 			w.println();
 
@@ -83,10 +59,7 @@ public class HeaderGenerator {
 				writeForwardDecl(w, p);
 			}
 			w.println();
-			for (ProtocolDefinition p : protocols) {
-				writeProtocol(w, p);
-			}
-			w.println();
+
 			for (ProtocolDescriptor p : registry.getProtocols()) {
 				writeProtocol(w, p);
 			}
@@ -114,41 +87,12 @@ public class HeaderGenerator {
 		w.println();
 	}
 
-	private void writeForwardDecl(PrintWriter w, ProtocolDefinition p) {
-		String objcName = p.getObjcName();
-		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s;%n", objcName);
-	}
-
 	private void writeForwardDecl(PrintWriter w, TypeDescriptor p) {
 		String objcName = p.getIosType();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		w.printf("@protocol %s;%n", objcName);
 	}
-	private void writeProtocol(PrintWriter w, ProtocolDefinition p) {
-		String objcName = p.getObjcName();
-		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s", objcName);
-		// add protocol inheritance
-		if (! p.getExtensions().isEmpty()) {
-			w.print("<");
-			String prefix = "";
-			for (String ext : p.getExtensions()) {
-				w.printf("%s%s", prefix, ext);
-				ext = ", ";
-			}
-			w.print(">");
-		}
-		w.println();
 
-		for (MethodDefinition md : p.getMethods()) {
-			writeMethod(w, md);
-		}
-
-		w.println("@end");
-		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
-		w.println();
-	}
 	private void writeProtocol(PrintWriter w, ProtocolDescriptor p) {
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
@@ -174,25 +118,6 @@ public class HeaderGenerator {
 		w.println();
 	}
 
-	private void writeMethod(PrintWriter w, MethodDefinition md) {
-		w.printf("-(%s) %s", effectiveParameterType(md.getReturnType()), md.getName());
-		if (! md.getParameters().isEmpty()) {
-			boolean isFirstParameter = true;
-			for (MethodParameter mp : md.getParameters()) {
-				final String effectiveParameterType = effectiveParameterType(mp.getType());
-				final String paramName = mp.getName();
-				if (isFirstParameter) {
-					w.printf(":(%s)%s", effectiveParameterType, paramName);
-					isFirstParameter = false;
-				} else {
-					char firstCharacter = Character.toUpperCase(paramName.charAt(0));
-					String remainingChar = paramName.substring(1);
-					w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
-				}
-			}
-		}
-		w.println(";");
-	}
 	private void writeMethod(PrintWriter w, MethodDescriptor md) {
 		w.printf("-(%s) %s", md.getReturnType().getIosType(), md.getName());
 		if (! md.getParameters().isEmpty()) {
@@ -214,20 +139,11 @@ public class HeaderGenerator {
 	}
 
 	private void writeObject(PrintWriter w, ObjectDefinition o) {
-		String protocolName = o.getProtocolName(protocols);
+		String protocolName = o.getProtocolName(this.registry.getProtocols());
 		w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
 		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
-		w.println();
-	}
-
-	private void writeEnum(PrintWriter w, EnumDefinition e){
-		w.printf("typedef NS_ENUM(NSUInteger, %s) {%n", e.getJavaName());
-		for(String v : e.getValues()){
-			w.printf("k%s%s,%n", e.getJavaName(), v);
-		}
-		w.println("};");
 		w.println();
 	}
 
@@ -245,16 +161,6 @@ public class HeaderGenerator {
 		w.println();
 
 	}
-
-	private String effectiveParameterType(TypeDefinition typeDef) {
-		EnumDefinition foundEnum = this.enumsByName.get(typeDef.getRawType());
-		if (foundEnum != null) {
-			return foundEnum.getJavaName();
-		} else {
-			return typeDef.getIosType();
-		}
-	}
-
 
 	private List<ProtocolDescriptor> sortProtocols(List<ProtocolDescriptor> input) {
 		List<ProtocolDescriptor> protocols = new ArrayList<>(input.size());

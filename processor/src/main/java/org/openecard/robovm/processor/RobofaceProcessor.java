@@ -83,8 +83,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private JavacProcessingEnvironment jcProcEnv;
 
 	private boolean firstPass;
-	private List<EnumDefinition> enumDefs;
-	private List<ProtocolDefinition> protoDefs;
 	private List<ObjectDefinition> objDefs;
 	private TypeDescriptorRegistry registry;
 
@@ -93,8 +91,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 		super.init(processingEnv);
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
-		enumDefs = new ArrayList<>();
-		protoDefs = new ArrayList<>();
 		objDefs = new ArrayList<>();
 		registry = new TypeDescriptorRegistry();
 	}
@@ -126,9 +122,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 						System.out.println("Processing enum " + enumName);
 
 						// record type information for header generation
-						final EnumDefinition enumDef = new EnumDefinition(enumName);
-						enumDefs.add(enumDef);
-
 						final EnumDescriptor enumDesc = registry.createEnumDescriptor(ccd.sym.type);
 
 						for (JCTree next : ccd.getMembers()) {
@@ -136,7 +129,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 								JCTree.JCVariableDecl decl = (JCTree.JCVariableDecl) next;
 								if (Flags.isEnum(decl.sym)) {
 									//System.out.println("next: " + decl.name);
-									enumDef.addValue(decl.name.toString());
 									enumDesc.addValue(decl.name.toString());
 								}
 							}
@@ -162,9 +154,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 						System.out.println("Processing class " + ifaceName);
 
 						// record type information for header generation
-						final ProtocolDefinition protoDef = new ProtocolDefinition(ifaceName, ccd.implementing);
-						protoDefs.add(protoDef);
-
 						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd);
 
 						// create ObjCProtocol type
@@ -191,10 +180,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 								System.out.println("Adding @Method annotation to method " + tree.name);
 
 								// capture method definitions
-								MethodDefinition md = new MethodDefinition(tree.name.toString(),
-										tree.getReturnType().type);
-								protoDef.addMethod(md);
-
 								final MethodDescriptor methodDescriptor = registry.createMethodDescriptor(
 										tree.name.toString(),
 										tree.getReturnType().type);
@@ -202,10 +187,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 								for (JCTree.JCVariableDecl paramDecl : tree.params) {
 									Type parameterType = paramDecl.getType().type;
-									
-									MethodParameter mp = new MethodParameter(paramDecl.name.toString(),
-										parameterType);
-									md.addParam(mp);
 
 									final MethodParameterDescriptor methodParamDescr = registry.createMethodParameterDescriptor(
 											paramDecl.name.toString(),
@@ -348,13 +329,13 @@ public class RobofaceProcessor extends AbstractProcessor {
 				}
 			}
 
-			if (!protoDefs.isEmpty()) {
+			if (!registry.getProtocols().isEmpty()) {
 				try {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
 					System.out.println(headerName);
-					HeaderGenerator h = new HeaderGenerator(enumDefs, protoDefs, objDefs, includeHeaders, registry);
+					HeaderGenerator h = new HeaderGenerator(objDefs, includeHeaders, registry);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
