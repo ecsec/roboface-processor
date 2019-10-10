@@ -41,15 +41,9 @@ public class TypeDescriptorRegistry {
 			return lookup.get(type);
 		}
 		if (type.isPrimitiveOrVoid()) {
-			if (type.isPrimitive()) {
-				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, type.tsym.getSimpleName().toString());
-				lookup.put(type, desc);
-				return desc;
-			} else {
-				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "void");
-				lookup.put(type, desc);
-				return desc;
-			}
+			PrimitiveDescriptor desc = PrimitiveDescriptor.from(type);
+			lookup.put(type, desc);
+			return desc;
 		} else if (type.tsym.toString().equals("java.util.List")) {
 			final Type innerType = type.allparams().head;
 			if (innerType.isPrimitiveOrVoid()) {
@@ -95,7 +89,7 @@ public class TypeDescriptorRegistry {
 
 	public MethodDescriptor createMethodDescriptor(String name, Type type) {
 		MethodDescriptor descriptor = new MethodDescriptor(name,
-										getReturnType(type));
+				getReturnType(type));
 
 		return descriptor;
 	}
