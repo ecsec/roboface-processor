@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Neil Crossley
  */
-public class EnumDescriptor implements TypeDescriptor {
+public class EnumDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String javaName;
 	private final List<String> values;
@@ -54,5 +54,10 @@ public class EnumDescriptor implements TypeDescriptor {
 	@Override
 	public String getIosType() {
 		return this.getJavaName();
+	}
+
+	@Override
+	public String getObjcName() {
+		return this.getIosType();
 	}
 }

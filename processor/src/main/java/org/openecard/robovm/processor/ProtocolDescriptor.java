@@ -33,7 +33,7 @@ import java.util.List;
  * @author Tobias Wich
  * @author Neil Crossley
  */
-public class ProtocolDescriptor implements TypeDescriptor {
+public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String objcName;
 	private final ArrayList<String> extensions;
@@ -48,7 +48,6 @@ public class ProtocolDescriptor implements TypeDescriptor {
 			extensions.add(nextIface.type.asElement().getSimpleName().toString());
 		});
 	}
-
 
 	public String getObjcName() {
 		return objcName;

@@ -46,4 +46,5 @@ public class LookupDescriptor implements TypeDescriptor {
 	public String toString() {
 		return this.registry.asType(this.givenType).toString();
 	}
+
 }

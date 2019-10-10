@@ -45,10 +45,10 @@ public class ObjectDefinition {
 		return factoryName;
 	}
 
-	public String getProtocolName(List<ProtocolDescriptor> protocols) {
+	public <T extends DeclarationDescriptor> String getProtocolName(List<T> protocols) {
 		for (String iface : ifaces) {
 			//System.out.println("iface: " + iface);
-			for (ProtocolDescriptor pd : protocols) {
+			for (DeclarationDescriptor pd : protocols) {
 				//System.out.println("protos: " + pd.getObjcName());
 				if (iface.equals(pd.getObjcName())) {
 					return iface;
