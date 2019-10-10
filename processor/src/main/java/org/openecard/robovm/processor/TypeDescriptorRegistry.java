@@ -49,7 +49,7 @@ public class TypeDescriptorRegistry {
 			if (innerType.isPrimitiveOrVoid()) {
 				throw new IllegalArgumentException("Cannot wrap ");
 			}
-			ListDescriptor desc = new ListDescriptor(asType(innerType));
+			ListDescriptor desc = new ListDescriptor(getReferencingType(innerType));
 			lookup.put(type, desc);
 			return desc;
 		} else if (type.tsym.toString().equals("java.lang.String")) {
@@ -65,11 +65,15 @@ public class TypeDescriptorRegistry {
 		throw new IllegalArgumentException(String.format("The given type is unknown: %s", type));
 	}
 
-	private TypeDescriptor getReturnType(Type type) {
+	private LookupDescriptor getReturnType(Type type) {
 		return new LookupDescriptor(type, this);
 	}
 
-	private TypeDescriptor getParameterType(Type type) {
+	private LookupDescriptor getParameterType(Type type) {
+		return new LookupDescriptor(type, this);
+	}
+
+	private LookupDescriptor getReferencingType(Type type) {
 		return new LookupDescriptor(type, this);
 	}
 

@@ -26,4 +26,9 @@ public class ListDescriptor implements TypeDescriptor {
 		return String.format("NSArray<%s>", descriptor.getIosType());
 	}
 
+	@Override
+	public String marshaller() {
+		return "org.robovm.apple.foundation.NSArray.AsListMarshaler";
+	}
+
 }

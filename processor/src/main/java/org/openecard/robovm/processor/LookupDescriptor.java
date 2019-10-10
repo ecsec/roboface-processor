@@ -47,4 +47,9 @@ public class LookupDescriptor implements TypeDescriptor {
 		return this.registry.asType(this.givenType).toString();
 	}
 
+	@Override
+	public String marshaller() {
+		return this.registry.asType(this.givenType).marshaller();
+	}
+
 }

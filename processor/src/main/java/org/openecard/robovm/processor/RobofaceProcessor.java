@@ -29,17 +29,24 @@ import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.Trees;
 import com.sun.tools.javac.code.Attribute;
 import com.sun.tools.javac.code.Flags;
+import static com.sun.tools.javac.code.Flags.PARAMETER;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Types;
 import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.util.Names;
+import com.sun.tools.javac.util.Pair;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -140,6 +147,9 @@ public class RobofaceProcessor extends AbstractProcessor {
 			}
 		};
 
+		TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+		List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations = new LinkedList<>();
+
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
 			@Override
@@ -184,6 +194,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 										tree.name.toString(),
 										tree.getReturnType().type);
 								protoDesc.addMethod(methodDescriptor);
+								methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodDescriptor.getReturnType(), tree.getModifiers()));
 
 								for (JCTree.JCVariableDecl paramDecl : tree.params) {
 									Type parameterType = paramDecl.getType().type;
@@ -192,14 +203,14 @@ public class RobofaceProcessor extends AbstractProcessor {
 											paramDecl.name.toString(),
 											parameterType);
 									methodDescriptor.addParam(methodParamDescr);
+
+									methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodParamDescr.getType(), paramDecl.getModifiers()));
 								}
 
 								// create @Method type
-								TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 								Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
 								JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(fwClass.asType(), com.sun.tools.javac.util.List.nil()));
 								tree.mods.annotations = tree.mods.annotations.append(at);
-
 							}
 						});
 
@@ -252,7 +263,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 						objDefs.add(objDef);
 
 						// create ObjCProtocol type
-						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
 						JCTree.JCExpression exp = tm.Type(fwClass.asType());
 						// add type to tree
@@ -329,6 +339,8 @@ public class RobofaceProcessor extends AbstractProcessor {
 				}
 			}
 
+			insertMarshallers(methodDeclarations, tm);
+
 			if (!registry.getProtocols().isEmpty()) {
 				try {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
@@ -349,6 +361,38 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 		// claim annotation and prevent further processing
 		return true;
+	}
+
+	private void insertMarshallers(List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations, TreeMaker tm) {
+		Map<String, Symbol.ClassSymbol> marshallerByName = new HashMap<>();
+		Symbol.ClassSymbol classClazz = jcProcEnv.getElementUtils().getTypeElement("java.lang.Class");
+		Symbol.ClassSymbol marshallerClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.rt.bro.annotation.Marshaler");
+		Names names = Names.instance(jcProcEnv.getContext());
+		Types types = Types.instance(jcProcEnv.getContext());
+		Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(PARAMETER, names.value, classClazz.type, marshallerClass.owner);
+		System.out.println("Printing stuff");
+		System.out.println(methodSymbol);
+		for (Map.Entry<TypeDescriptor, JCTree.JCModifiers> methodDeclaration : methodDeclarations) {
+			String marshaller = methodDeclaration.getKey().marshaller();
+			if (marshaller != null) {
+				System.out.println("Marshaller called: " + marshaller);
+				JCTree.JCModifiers mods = methodDeclaration.getValue();
+
+				Symbol.ClassSymbol marshallerClassSym = marshallerByName.get(marshaller);
+				if (marshallerClassSym == null) {
+					marshallerClassSym = jcProcEnv.getElementUtils().getTypeElement(marshaller);
+					System.out.println("Created class symbol" + marshallerClassSym);
+					marshallerByName.put(marshaller, marshallerClassSym);
+				} else {
+					System.out.println("Using found class symbol" + marshallerClassSym);
+				}
+				Pair<Symbol.MethodSymbol,Attribute> ds = new Pair<>(methodSymbol, new Attribute.Class(types, marshallerClassSym.type));
+
+				JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(marshallerClass.asType(), com.sun.tools.javac.util.List.of(ds)));
+				System.out.println(at);
+				mods.annotations = mods.annotations.append(at);
+			}
+		}
 	}
 
 	private List<IncludeHeaderDefinition> getIncludeHeaders() {

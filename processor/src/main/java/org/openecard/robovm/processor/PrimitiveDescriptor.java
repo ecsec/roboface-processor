@@ -42,6 +42,11 @@ public class PrimitiveDescriptor implements TypeDescriptor {
 		return iosType;
 	}
 
+	@Override
+	public String marshaller() {
+		return null;
+	}
+
 	public static PrimitiveDescriptor from(Type type) {
 		String simpleName = type.tsym.getSimpleName().toString();
 		String converted;
@@ -104,4 +109,5 @@ public class PrimitiveDescriptor implements TypeDescriptor {
 			default: return String.format("NSObject<%s> *", type);
 		}
 	}
+
 }

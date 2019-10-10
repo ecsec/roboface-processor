@@ -28,4 +28,6 @@ package org.openecard.robovm.processor;
 public interface TypeDescriptor {
 
 	String getIosType();
+
+	String marshaller();
 }

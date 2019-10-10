@@ -49,6 +49,7 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		});
 	}
 
+	@Override
 	public String getObjcName() {
 		return objcName;
 	}
@@ -74,5 +75,10 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 	@Override
 	public String getIosType() {
 		return String.format("NSObject<%s> *", this.objcName);
+	}
+
+	@Override
+	public String marshaller() {
+		return null;
 	}
 }

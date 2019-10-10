@@ -60,4 +60,9 @@ public class EnumDescriptor implements TypeDescriptor, DeclarationDescriptor {
 	public String getObjcName() {
 		return this.getIosType();
 	}
+
+	@Override
+	public String marshaller() {
+		return null;
+	}
 }
