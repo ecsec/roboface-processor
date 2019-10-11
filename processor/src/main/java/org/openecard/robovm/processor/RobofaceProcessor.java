@@ -370,26 +370,22 @@ public class RobofaceProcessor extends AbstractProcessor {
 		Names names = Names.instance(jcProcEnv.getContext());
 		Types types = Types.instance(jcProcEnv.getContext());
 		Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(PARAMETER, names.value, classClazz.type, marshallerClass.owner);
-		System.out.println("Printing stuff");
-		System.out.println(methodSymbol);
 		for (Map.Entry<TypeDescriptor, JCTree.JCModifiers> methodDeclaration : methodDeclarations) {
-			String marshaller = methodDeclaration.getKey().marshaller();
+			final TypeDescriptor type = methodDeclaration.getKey();
+			String marshaller = type.marshaller();
 			if (marshaller != null) {
-				System.out.println("Marshaller called: " + marshaller);
 				JCTree.JCModifiers mods = methodDeclaration.getValue();
 
 				Symbol.ClassSymbol marshallerClassSym = marshallerByName.get(marshaller);
 				if (marshallerClassSym == null) {
 					marshallerClassSym = jcProcEnv.getElementUtils().getTypeElement(marshaller);
-					System.out.println("Created class symbol" + marshallerClassSym);
 					marshallerByName.put(marshaller, marshallerClassSym);
 				} else {
-					System.out.println("Using found class symbol" + marshallerClassSym);
 				}
 				Pair<Symbol.MethodSymbol,Attribute> ds = new Pair<>(methodSymbol, new Attribute.Class(types, marshallerClassSym.type));
 
 				JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(marshallerClass.asType(), com.sun.tools.javac.util.List.of(ds)));
-				System.out.println(at);
+				System.out.printf("Conversion to iOS type %s requires marshaller annotation %s\n", type.getIosType(), at);
 				mods.annotations = mods.annotations.append(at);
 			}
 		}

@@ -31,4 +31,9 @@ public class ListDescriptor implements TypeDescriptor {
 		return "org.robovm.apple.foundation.NSArray.AsListMarshaler";
 	}
 
+	@Override
+	public String toString() {
+		return this.getIosType();
+	}
+
 }

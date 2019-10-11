@@ -10,6 +10,7 @@
 package org.openecard.robovm.processor;
 
 import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.JCTree;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,7 +45,9 @@ public class TypeDescriptorRegistry {
 			PrimitiveDescriptor desc = PrimitiveDescriptor.from(type);
 			lookup.put(type, desc);
 			return desc;
-		} else if (type.tsym.toString().equals("java.util.List")) {
+		}
+		final String symbolName = type.tsym.toString();
+		if (symbolName.equals("java.util.List")) {
 			final Type innerType = type.allparams().head;
 			if (innerType.isPrimitiveOrVoid()) {
 				throw new IllegalArgumentException("Cannot wrap ");
@@ -52,17 +55,27 @@ public class TypeDescriptorRegistry {
 			ListDescriptor desc = new ListDescriptor(getReferencingType(innerType));
 			lookup.put(type, desc);
 			return desc;
-		} else if (type.tsym.toString().equals("java.lang.String")) {
+		} else if (symbolName.equals("java.lang.String")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSString *");
 			lookup.put(type, desc);
 			return desc;
-		} else if (type.tsym.toString().equals("java.lang.Integer")) {
+		} else if (symbolName.equals("java.lang.Integer")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "int");
 			lookup.put(type, desc);
 			return desc;
+		} else if (type.getTag() == TypeTag.ARRAY) {
+			final Type innerType = ((Type.ArrayType) type).getComponentType();
+			if (innerType.isPrimitive() && innerType.tsym.getSimpleName().toString().equals("byte")) {
+				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
+				lookup.put(type, desc);
+				return desc;
+			}
 		}
 
-		throw new IllegalArgumentException(String.format("The given type is unknown: %s", type));
+		System.out.printf("WARNING: Found an undeclared type %s and are assuming it is a valid, available Java protocol.\n", type);
+		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), com.sun.tools.javac.util.List.nil());
+		lookup.put(type, descriptor);
+		return descriptor;
 	}
 
 	private LookupDescriptor getReturnType(Type type) {
