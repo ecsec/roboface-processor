@@ -31,11 +31,11 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeArrayEvaluator {
 
-	List<String> provideStrings();
+	List<String> provideStrings(byte[] bytes);
 
 	void acceptListIntegers(List<Integer> ints);
 
-	void acceptSomeEnums(List<SomeEnum> enums);
+	byte[] acceptSomeEnums(List<SomeEnum> enums);
 
 	List<SomeEnum> provideSomeEnums();
 }
