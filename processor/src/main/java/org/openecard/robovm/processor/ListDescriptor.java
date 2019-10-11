@@ -23,7 +23,7 @@ public class ListDescriptor implements TypeDescriptor {
 
 	@Override
 	public String getIosType() {
-		return String.format("NSArray<%s>", descriptor.getIosType());
+		return String.format("NSArray<%s> *", descriptor.getIosType());
 	}
 
 	@Override
