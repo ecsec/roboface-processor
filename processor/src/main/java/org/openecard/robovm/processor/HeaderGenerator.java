@@ -87,8 +87,8 @@ public class HeaderGenerator {
 		w.println();
 	}
 
-	private void writeForwardDecl(PrintWriter w, TypeDescriptor p) {
-		String objcName = p.getIosType();
+	private void writeForwardDecl(PrintWriter w, ProtocolDescriptor p) {
+		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		w.printf("@protocol %s;%n", objcName);
 	}
