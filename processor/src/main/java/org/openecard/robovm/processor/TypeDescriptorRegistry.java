@@ -72,7 +72,7 @@ public class TypeDescriptorRegistry {
 			}
 		}
 
-		System.out.printf("WARNING: Found an undeclared type %s and are assuming it is a valid, available Java protocol.\n", type);
+		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
 		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), com.sun.tools.javac.util.List.nil());
 		lookup.put(type, descriptor);
 		return descriptor;

@@ -44,10 +44,12 @@ import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
@@ -112,8 +114,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 			return true;
 		}
 
+		Set<Type.ClassType> knownRobofaceInterfaces = new HashSet<>();
+
 		final Trees trees = Trees.instance(processingEnv);
-		final TreePathScanner<Object, CompilationUnitTree> enumScanner, ifaceScanner, objScanner;
+		final TreePathScanner<Object, CompilationUnitTree> enumScanner, ifaceScanner, objScanner, implScanner;
 
 		enumScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -150,6 +154,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 		TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
 		List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations = new LinkedList<>();
 
+		// create ObjCProtocol type
+		Symbol.ClassSymbol nsObjectProtocolSymbol = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObjectProtocol");
+		JCTree.JCExpression nsObjectProtocolExp = tm.Type(nsObjectProtocolSymbol.asType());
+
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
 			@Override
@@ -163,15 +171,13 @@ public class RobofaceProcessor extends AbstractProcessor {
 						String ifaceName = classTree.getSimpleName().toString();
 						System.out.println("Processing class " + ifaceName);
 
+						knownRobofaceInterfaces.add((Type.ClassType)ccd.sym.type);
+
 						// record type information for header generation
 						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd);
 
-						// create ObjCProtocol type
-						TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
-						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObjectProtocol");
-						JCTree.JCExpression exp = tm.Type(fwClass.asType());
-						// add type to tree
-						ccd.implementing = ccd.implementing.append(exp);
+						// add ObjCProtocol type to tree
+						ccd.implementing = ccd.implementing.append(nsObjectProtocolExp);
 
 						// find methods in this interface and add @Method annotation
 						ccd.accept(new TreeTranslator() {
@@ -221,6 +227,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 			}
 		};
 
+		// create ObjCProtocol type
+		Symbol.ClassSymbol nsObjectSymbol = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
+		JCTree.JCExpression nsObjectExpression = tm.Type(nsObjectSymbol.asType());
+
 		objScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
 			@Override
@@ -262,18 +272,15 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, ifaces);
 						objDefs.add(objDef);
 
-						// create ObjCProtocol type
-						Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
-						JCTree.JCExpression exp = tm.Type(fwClass.asType());
-						// add type to tree
-						ccd.extending = exp;
+						// add NSObject type to tree
+						ccd.extending = nsObjectExpression;
 
 						// add instance method
 						{
 							Names names = Names.instance(jcProcEnv.getContext());
 
 							// define return type
-							JCTree.JCExpression returnType = tm.Type(fwClass.type);
+							JCTree.JCExpression returnType = tm.Type(nsObjectSymbol.type);
 							// define instance creation
 							JCTree.JCNewClass newSt = tm.NewClass(null, com.sun.tools.javac.util.List.nil(),
 									tm.Type(ccd.sym.asType()), com.sun.tools.javac.util.List.nil(), null);
@@ -296,7 +303,58 @@ public class RobofaceProcessor extends AbstractProcessor {
 			}
 		};
 
+		Types types = Types.instance(jcProcEnv.getContext());
+
+
+		Predicate<Type.ClassType> mustExtendNSObject = someType -> {
+			for (Type.ClassType knownRobofaceProtocolInterfaces : knownRobofaceInterfaces) {
+
+				if (types.isSubtype(someType, knownRobofaceProtocolInterfaces)) {
+					return true;
+				}
+			}
+
+			return types.isSubtype(someType, nsObjectProtocolSymbol.asType());
+		};
+
+		implScanner = new TreePathScanner<Object, CompilationUnitTree>() {
+
+			@Override
+			public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
+
+				if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
+					final JCCompilationUnit compilationUnit = (JCCompilationUnit) unitTree;
+					final JCTree.JCClassDecl ccd = (JCTree.JCClassDecl) classTree;
+
+					// Only process on files which have been compiled from source
+					if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE && !ccd.sym.isInterface()) {
+						boolean extendsPublicRobofaceInterface = scanInterfaces(ccd, mustExtendNSObject);
+						if (extendsPublicRobofaceInterface && ccd.extending == null) {
+							System.out.printf("Modifying class %s to inherit from NSObject, because it must be bindable to iOS.\n", ccd.sym);
+							ccd.extending = nsObjectExpression;
+						}
+					}
+				}
+				return trees;
+			}
+
+			private boolean scanInterfaces(final JCTree.JCClassDecl ccdm, Predicate<Type.ClassType> checker) {
+
+				for (JCTree.JCExpression implmentStatement : ccdm.implementing) {
+
+					Type.ClassType currentType = (Type.ClassType)implmentStatement.type;
+
+					if (checker.test(currentType)) {
+						return true;
+					}
+
+
+				}
+				return false;
+			}
+		};
 		try {
+
 			for (final Element element : env.getElementsAnnotatedWith(FrameworkEnum.class)) {
 				if (element.getKind() == ElementKind.ENUM) {
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE,
@@ -339,6 +397,15 @@ public class RobofaceProcessor extends AbstractProcessor {
 				}
 			}
 
+			for (final Element element : env.getRootElements()) {
+				if (element.getKind() == ElementKind.CLASS) {
+
+					final TreePath path = trees.getPath(element);
+
+					implScanner.scan(path, path.getCompilationUnit());
+				}
+			}
+
 			insertMarshallers(methodDeclarations, tm);
 
 			if (!registry.getProtocols().isEmpty()) {
@@ -346,7 +413,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
-					System.out.println(headerName);
 					HeaderGenerator h = new HeaderGenerator(objDefs, includeHeaders, registry);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
