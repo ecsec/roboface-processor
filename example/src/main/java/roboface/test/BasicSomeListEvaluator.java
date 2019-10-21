@@ -31,22 +31,6 @@ import java.util.List;
 public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 
 	@Override
-	public List<String> provideStrings(byte[] bytes) {
-		System.out.printf("BasicSomeListEvaluator is providing Strings given bytes: ");
-		for (int i = 0; i < bytes.length; i++) {
-			byte aByte = bytes[i];
-			System.out.print(aByte);
-			System.out.print(',');
-		}
-		System.out.println(";");
-		List<String> result = new ArrayList<>();
-		result.add("some stringy value");
-		result.add("another one");
-		result.add("the last string value");
-		return result;
-	}
-
-	@Override
 	public void acceptListIntegers(List<Integer> ints) {
 		System.out.printf("BasicSomeListEvaluator has accepted integers: ");
 		for (Integer anInt : ints) {
@@ -75,6 +59,22 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 		result.add(SomeEnum.SecondValue);
 		result.add(SomeEnum.LastValue);
 		result.add(SomeEnum.FirstValue);
+		return result;
+	}
+
+	@Override
+	public List<String> provideStringsFromBytes(byte[] bytes, byte[] secondBytes, byte[] thirdBytes, byte[] lastBytes) {
+		System.out.printf("BasicSomeListEvaluator is providing Strings given bytes: ");
+		for (int i = 0; i < bytes.length; i++) {
+			byte aByte = bytes[i];
+			System.out.print(aByte);
+			System.out.print(',');
+		}
+		System.out.println(";");
+		List<String> result = new ArrayList<>();
+		result.add("some stringy value");
+		result.add("another one");
+		result.add("the last string value");
 		return result;
 	}
 

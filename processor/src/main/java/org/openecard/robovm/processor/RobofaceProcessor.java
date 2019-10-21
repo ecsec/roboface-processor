@@ -118,6 +118,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 		final Trees trees = Trees.instance(processingEnv);
 		final TreePathScanner<Object, CompilationUnitTree> enumScanner, ifaceScanner, objScanner, implScanner;
+		final Names names = Names.instance(jcProcEnv.getContext());
 
 		enumScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -160,6 +161,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
+			Symbol.ClassSymbol methodAttributeSym = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
+			Symbol.ClassSymbol stringClazz = jcProcEnv.getElementUtils().getTypeElement("java.lang.String");
+			Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(PARAMETER, names.fromString("selector"), stringClazz.type, methodAttributeSym.owner);
+
 			@Override
 			public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
 				if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
@@ -193,7 +198,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 							@Override
 							public void visitMethodDef(JCTree.JCMethodDecl tree) {
 								super.visitMethodDef(tree);
-								System.out.println("Adding @Method annotation to method " + tree.name);
 
 								// capture method definitions
 								final MethodDescriptor methodDescriptor = registry.createMethodDescriptor(
@@ -214,9 +218,11 @@ public class RobofaceProcessor extends AbstractProcessor {
 								}
 
 								// create @Method type
-								Symbol.ClassSymbol fwClass = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
-								JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(fwClass.asType(), com.sun.tools.javac.util.List.nil()));
+								Pair<Symbol.MethodSymbol,Attribute> ds = new Pair<>(methodSymbol, new Attribute.Constant(stringClazz.type, methodDescriptor.asSelector()));
+								JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(methodAttributeSym.asType(), com.sun.tools.javac.util.List.of(ds)));
 								tree.mods.annotations = tree.mods.annotations.append(at);
+
+								System.out.printf("Adding @Method annotation %s to method %s\n", at, tree.name);
 							}
 						});
 
@@ -277,7 +283,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 						// add instance method
 						{
-							Names names = Names.instance(jcProcEnv.getContext());
 
 							// define return type
 							JCTree.JCExpression returnType = tm.Type(nsObjectSymbol.type);

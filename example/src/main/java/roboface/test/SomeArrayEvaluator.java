@@ -31,7 +31,7 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeArrayEvaluator {
 
-	List<String> provideStrings(byte[] bytes);
+	List<String> provideStringsFromBytes(byte[] bytes, byte[] secondBytes, byte[] thirdBytes, byte[] lastBytes);
 
 	void acceptListIntegers(List<Integer> ints);
 
