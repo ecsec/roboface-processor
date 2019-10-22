@@ -80,7 +80,6 @@ public class MethodDescriptor {
 	public String asSelector() {
 		StringBuilder builder = new StringBuilder();
 		builder.append(name);
-		builder.append(":");
 		boolean isFirstParameter = true;
 		for (MethodParameterDescriptor mp : this.params) {
 			final String paramName = mp.getName();
@@ -92,8 +91,8 @@ public class MethodDescriptor {
 				builder.append(firstCharacter);
 				String remainingChar = paramName.substring(1);
 				builder.append(remainingChar);
-				builder.append(":");
 			}
+			builder.append(":");
 		}
 		return builder.toString();
 	}
