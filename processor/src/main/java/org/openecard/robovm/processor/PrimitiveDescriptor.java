@@ -31,6 +31,7 @@ public class PrimitiveDescriptor implements TypeDescriptor {
 
 	private final String iosType;
 	private final Type type;
+	private String marshaller;
 
 	public PrimitiveDescriptor(Type type, String iosType) {
 		this.type = type;
@@ -44,7 +45,11 @@ public class PrimitiveDescriptor implements TypeDescriptor {
 
 	@Override
 	public String marshaller() {
-		return null;
+		return this.marshaller;
+	}
+
+	public void setMarshaller(String newMarshaller) {
+		this.marshaller = newMarshaller;
 	}
 
 	public static PrimitiveDescriptor from(Type type) {

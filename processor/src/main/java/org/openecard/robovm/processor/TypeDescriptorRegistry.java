@@ -67,6 +67,7 @@ public class TypeDescriptorRegistry {
 			final Type innerType = ((Type.ArrayType) type).getComponentType();
 			if (innerType.isPrimitive() && innerType.tsym.getSimpleName().toString().equals("byte")) {
 				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
+				desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteArrayNSDataMarshaller");
 				lookup.put(type, desc);
 				return desc;
 			}

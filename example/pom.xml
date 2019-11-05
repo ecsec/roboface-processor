@@ -57,6 +57,13 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.openecard.tools</groupId>
+			<artifactId>roboface-marshaller</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+
+		<dependency>
 			<groupId>com.mobidevelop.robovm</groupId>
 			<artifactId>robovm-rt</artifactId>
 			<version>${robovm.version}</version>

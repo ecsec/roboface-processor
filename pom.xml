@@ -45,6 +45,7 @@
 		<module>annotation</module>
 		<module>processor</module>
 		<module>example</module>
+	 <module>roboface-marshaller</module>
 	</modules>
 
 	<profiles>
