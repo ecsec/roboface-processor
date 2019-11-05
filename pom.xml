@@ -5,7 +5,7 @@
 	<groupId>org.openecard.tools</groupId>
 	<artifactId>roboface-parent</artifactId>
 	<packaging>pom</packaging>
-	<version>v1.0.0-rc.10-SNAPSHOT</version>
+	<version>1.0.0-rc.10-SNAPSHOT</version>
 	<name>RoboVM Interface Annotation Processor</name>
 
 	<organization>
