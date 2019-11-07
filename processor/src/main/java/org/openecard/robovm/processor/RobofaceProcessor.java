@@ -93,7 +93,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 	private boolean firstPass;
 	private List<ObjectDefinition> objDefs;
-	private TypeDescriptorRegistry registry;
+	private TypeRegistry registry;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
@@ -101,7 +101,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
 		objDefs = new ArrayList<>();
-		registry = new TypeDescriptorRegistry();
+		registry = new TypeRegistry();
 	}
 
 	@Override

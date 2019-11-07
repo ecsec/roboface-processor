@@ -27,12 +27,12 @@ import com.sun.tools.javac.code.Type;
  *
  * @author Neil Crossley
  */
-public class LookupDescriptor implements TypeDescriptor {
+public class LookupTypeDescriptor implements TypeDescriptor {
 
 	private final Type givenType;
-	private final TypeDescriptorRegistry registry;
+	private final TypeRegistry registry;
 
-	public LookupDescriptor(Type givenType, TypeDescriptorRegistry registry) {
+	public LookupTypeDescriptor(Type givenType, TypeRegistry registry) {
 		this.givenType = givenType;
 		this.registry = registry;
 	}

@@ -21,6 +21,7 @@
  ***************************************************************************/
 package roboface.test;
 
+import java.io.Serializable;
 import java.util.List;
 import org.openecard.robovm.annotations.FrameworkInterface;
 
@@ -29,7 +30,7 @@ import org.openecard.robovm.annotations.FrameworkInterface;
  * @author Neil Crossley
  */
 @FrameworkInterface
-public interface SomeArrayEvaluator {
+public interface SomeArrayEvaluator extends Serializable {
 
 	List<String> provideStringsFromBytes(byte[] bytes, byte[] secondBytes, byte[] thirdBytes, byte[] lastBytes);
 

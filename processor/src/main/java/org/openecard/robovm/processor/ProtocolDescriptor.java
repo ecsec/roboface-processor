@@ -22,7 +22,6 @@
 
 package org.openecard.robovm.processor;
 
-import com.sun.tools.javac.tree.JCTree;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,17 +35,13 @@ import java.util.List;
 public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String objcName;
-	private final ArrayList<String> extensions;
-	private final ArrayList<MethodDescriptor> methods;
+	private final List<DeclarationDescriptor> extensions;
+	private final List<MethodDescriptor> methods;
 
-	public ProtocolDescriptor(String ifaceName, com.sun.tools.javac.util.List<JCTree.JCExpression> implementing) {
+	public ProtocolDescriptor(String ifaceName, List<DeclarationDescriptor> implementing) {
 		this.objcName = ifaceName;
-		this.extensions = new ArrayList<>();
 		this.methods = new ArrayList<>();
-
-		implementing.forEach((nextIface) -> {
-			extensions.add(nextIface.type.asElement().getSimpleName().toString());
-		});
+		this.extensions = implementing;
 	}
 
 	@Override
@@ -62,12 +57,12 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		return Collections.unmodifiableList(methods);
 	}
 
-	public List<String> getExtensions() {
+	public List<DeclarationDescriptor> getExtensions() {
 		return Collections.unmodifiableList(extensions);
 	}
 
-	public List<String> getExtensions(List<String> objcProtocols) {
-		ArrayList<String> result = new ArrayList<>(extensions);
+	public List<DeclarationDescriptor> getExtensions(List<DeclarationDescriptor> objcProtocols) {
+		ArrayList<DeclarationDescriptor> result = new ArrayList<>(extensions);
 		result.retainAll(objcProtocols);
 		return result;
 	}

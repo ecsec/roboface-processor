@@ -36,9 +36,9 @@ public class HeaderGenerator {
 
 	private final List<ObjectDefinition> objects;
 	private final List<IncludeHeaderDefinition> includes;
-	private final TypeDescriptorRegistry registry;
+	private final TypeRegistry registry;
 
-	public HeaderGenerator(List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeDescriptorRegistry registry) {
+	public HeaderGenerator(List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeRegistry registry) {
 		this.objects = objects;
 		this.includes = includes;
 		this.registry = registry;
@@ -101,9 +101,9 @@ public class HeaderGenerator {
 		if (! p.getExtensions().isEmpty()) {
 			w.print("<");
 			String prefix = "";
-			for (String ext : p.getExtensions()) {
-				w.printf("%s%s", prefix, ext);
-				ext = ", ";
+			for (DeclarationDescriptor ext : p.getExtensions()) {
+				w.printf("%s%s", prefix, ext.getObjcName());
+				prefix = ", ";
 			}
 			w.print(">");
 		}
@@ -159,16 +159,22 @@ public class HeaderGenerator {
 				// or if something is missing, insert it at the foremost position, so that a later insertion will if in
 				// doubt precede the missing element
 				int idx = 0;
-				List<String> extensions = new ArrayList<>(next.getExtensions());
+				List<String> extensionNames = new ArrayList<>();
+				for (DeclarationDescriptor extension : next.getExtensions()) {
+
+					System.out.println("Adding name: " + extension.getObjcName());
+					extensionNames.add(extension.getObjcName());
+				}
 				for (int i = 0; i < protocols.size(); i++) {
 					ProtocolDescriptor testObj = protocols.get(i);
 					// remove and see if an element has been removed actually
-					if (extensions.remove(testObj.getObjcName())) {
+					System.out.println("Comparing name: " + testObj.getObjcName());
+					if (extensionNames.remove(testObj.getObjcName())) {
 						// advance insertion index to the position after this element
 						idx = i + 1;
 					}
 					// stop if there is nothing left
-					if (extensions.isEmpty()) {
+					if (extensionNames.isEmpty()) {
 						break;
 					}
 				}

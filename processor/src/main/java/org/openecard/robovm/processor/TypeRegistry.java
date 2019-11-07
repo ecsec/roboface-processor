@@ -9,25 +9,36 @@
  ************************************************************************** */
 package org.openecard.robovm.processor;
 
+import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.JCTree;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  *
  * @author Neil Crossley
  */
-public class TypeDescriptorRegistry {
+public class TypeRegistry {
 
-	Map<Type, TypeDescriptor> lookup = new HashMap<>();
+	Map<Type, TypeDescriptor> typeLookup = new HashMap<>();
+	Map<Type, DeclarationDescriptor> declarationLookup = new HashMap<>();
 
 	List<EnumDescriptor> enums = new LinkedList<>();
 	List<ProtocolDescriptor> protocols = new LinkedList<>();
+
+	private Set<String> blacklist = new HashSet<>();
+
+	TypeRegistry() {
+		blacklist.add(Serializable.class.getCanonicalName());
+	}
 
 	public List<EnumDescriptor> getEnums() {
 		return Collections.unmodifiableList(enums);
@@ -37,13 +48,22 @@ public class TypeDescriptorRegistry {
 		return Collections.unmodifiableList(protocols);
 	}
 
+	DeclarationDescriptor asDeclaration(Type type) {
+		if (declarationLookup.containsKey(type)) {
+			return declarationLookup.get(type);
+		}
+
+		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
+		return descriptor;
+	}
+
 	TypeDescriptor asType(Type type) {
-		if (lookup.containsKey(type)) {
-			return lookup.get(type);
+		if (typeLookup.containsKey(type)) {
+			return typeLookup.get(type);
 		}
 		if (type.isPrimitiveOrVoid()) {
 			PrimitiveDescriptor desc = PrimitiveDescriptor.from(type);
-			lookup.put(type, desc);
+			typeLookup.put(type, desc);
 			return desc;
 		}
 		final String symbolName = type.tsym.toString();
@@ -53,54 +73,81 @@ public class TypeDescriptorRegistry {
 				throw new IllegalArgumentException("Cannot wrap ");
 			}
 			ListDescriptor desc = new ListDescriptor(getReferencingType(innerType));
-			lookup.put(type, desc);
+			typeLookup.put(type, desc);
 			return desc;
 		} else if (symbolName.equals("java.lang.String")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSString *");
-			lookup.put(type, desc);
+			typeLookup.put(type, desc);
 			return desc;
 		} else if (symbolName.equals("java.lang.Integer")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "int");
-			lookup.put(type, desc);
+			typeLookup.put(type, desc);
 			return desc;
 		} else if (type.getTag() == TypeTag.ARRAY) {
 			final Type innerType = ((Type.ArrayType) type).getComponentType();
 			if (innerType.isPrimitive() && innerType.tsym.getSimpleName().toString().equals("byte")) {
 				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
 				desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteArrayNSDataMarshaller");
-				lookup.put(type, desc);
+				typeLookup.put(type, desc);
 				return desc;
 			}
 		}
 
-		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), com.sun.tools.javac.util.List.nil());
-		lookup.put(type, descriptor);
+		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
 		return descriptor;
 	}
 
-	private LookupDescriptor getReturnType(Type type) {
-		return new LookupDescriptor(type, this);
+	private ProtocolDescriptor addFakeProtocolDescriptor(Type type) {
+		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
+		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), new LinkedList<>());
+		this.typeLookup.put(type, descriptor);
+		this.declarationLookup.put(type, descriptor);
+		return descriptor;
 	}
 
-	private LookupDescriptor getParameterType(Type type) {
-		return new LookupDescriptor(type, this);
+	private LookupTypeDescriptor getReturnType(Type type) {
+		return new LookupTypeDescriptor(type, this);
 	}
 
-	private LookupDescriptor getReferencingType(Type type) {
-		return new LookupDescriptor(type, this);
+	private LookupTypeDescriptor getParameterType(Type type) {
+		return new LookupTypeDescriptor(type, this);
+	}
+
+	private LookupTypeDescriptor getReferencingType(Type type) {
+		return new LookupTypeDescriptor(type, this);
+	}
+
+	private LookupDeclarationDescriptor getReferencingDeclaration(Type type) {
+		return new LookupDeclarationDescriptor(type, this);
 	}
 
 	public EnumDescriptor createEnumDescriptor(Type type) {
 		EnumDescriptor result = new EnumDescriptor(type.tsym.getSimpleName().toString());
-		lookup.put(type, result);
+		typeLookup.put(type, result);
 		enums.add(result);
 		return result;
 	}
 
 	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd) {
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(ccd.getSimpleName().toString(), ccd.implementing);
-		lookup.put(ccd.sym.type, descriptor);
+		final String simpleName = ccd.getSimpleName().toString();
+		final List<DeclarationDescriptor> inheritanceTypes = new LinkedList<>();
+
+		ccd.implementing.forEach((nextIface) -> {
+			if (nextIface.getKind() == Tree.Kind.IDENTIFIER) {
+				String fullname = nextIface.type.asElement().enclClass().className();
+
+				if (!this.blacklist.contains(fullname)) {
+
+					inheritanceTypes.add(this.getReferencingDeclaration(nextIface.type));
+				} else {
+					System.out.printf("Blacklisting inheritance %s from %s\n", simpleName, fullname);
+				}
+			};
+
+		});
+
+		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes);
+		typeLookup.put(ccd.sym.type, descriptor);
 		protocols.add(descriptor);
 		return descriptor;
 	}
