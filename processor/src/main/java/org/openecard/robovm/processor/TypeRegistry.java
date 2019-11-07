@@ -13,10 +13,8 @@ import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.JCTree;
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +32,10 @@ public class TypeRegistry {
 	List<EnumDescriptor> enums = new LinkedList<>();
 	List<ProtocolDescriptor> protocols = new LinkedList<>();
 
-	private Set<String> blacklist = new HashSet<>();
+	private final Set<String> inheritanceBlacklist;
 
-	TypeRegistry() {
-		blacklist.add(Serializable.class.getCanonicalName());
+	TypeRegistry(Set<String> inheritanceBlacklist) {
+		this.inheritanceBlacklist = inheritanceBlacklist;
 	}
 
 	public List<EnumDescriptor> getEnums() {
@@ -136,7 +134,7 @@ public class TypeRegistry {
 			if (nextIface.getKind() == Tree.Kind.IDENTIFIER) {
 				String fullname = nextIface.type.asElement().enclClass().className();
 
-				if (!this.blacklist.contains(fullname)) {
+				if (!this.inheritanceBlacklist.contains(fullname)) {
 
 					inheritanceTypes.add(this.getReferencingDeclaration(nextIface.type));
 				} else {

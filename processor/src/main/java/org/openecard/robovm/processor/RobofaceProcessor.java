@@ -84,6 +84,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 	public static final String HEADER_PATH = "roboface.headerpath";
 	public static final String HEADER_NAME = "roboface.headername";
 	public static final String INCLUDE_HEADERS = "roboface.include.headers";
+	public static final String INHERITANCE_BLACKLIST = "roboface.inheritance.blacklist";
 
 	// defaults for the options
 	public static final String HEADER_PATH_DEFAULT = "roboheaders";
@@ -101,7 +102,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
 		objDefs = new ArrayList<>();
-		registry = new TypeRegistry();
+		registry = new TypeRegistry(getInheritanceBlacklist(jcProcEnv));
 	}
 
 	@Override
@@ -471,6 +472,20 @@ public class RobofaceProcessor extends AbstractProcessor {
 			String trimmedPath = rawPath.trim();
 			if (!trimmedPath.isBlank()) {
 				result.add(new IncludeHeaderDefinition(trimmedPath));
+			}
+		}
+		return result;
+	}
+
+	private static Set<String> getInheritanceBlacklist(JavacProcessingEnvironment processingEnv) {
+
+		String rawInheritanceBlacklist = processingEnv.getOptions().getOrDefault(INHERITANCE_BLACKLIST, "");
+		
+		Set<String> result = new HashSet<>();
+		for (String rawClassPath : rawInheritanceBlacklist.split(";")) {
+			String trimmedClassPath = rawClassPath.trim();
+			if (!trimmedClassPath.isBlank()) {
+				result.add(trimmedClassPath);
 			}
 		}
 		return result;
