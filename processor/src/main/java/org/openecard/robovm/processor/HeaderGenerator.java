@@ -161,14 +161,11 @@ public class HeaderGenerator {
 				int idx = 0;
 				List<String> extensionNames = new ArrayList<>();
 				for (DeclarationDescriptor extension : next.getExtensions()) {
-
-					System.out.println("Adding name: " + extension.getObjcName());
 					extensionNames.add(extension.getObjcName());
 				}
 				for (int i = 0; i < protocols.size(); i++) {
 					ProtocolDescriptor testObj = protocols.get(i);
 					// remove and see if an element has been removed actually
-					System.out.println("Comparing name: " + testObj.getObjcName());
 					if (extensionNames.remove(testObj.getObjcName())) {
 						// advance insertion index to the position after this element
 						idx = i + 1;
