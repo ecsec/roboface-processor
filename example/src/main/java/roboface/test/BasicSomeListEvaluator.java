@@ -32,32 +32,13 @@ import java.util.List;
 public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 
 	@Override
-	public void acceptListIntegers(List<Integer> ints) {
-		System.out.printf("BasicSomeListEvaluator has accepted integers: ");
-		for (Integer anInt : ints) {
-			System.out.print(anInt);
+	public void acceptListStrings(List<String> vals) {
+		System.out.printf("BasicSomeListEvaluator has accepted strings: ");
+		for (String aString : vals) {
+			System.out.print(aString);
 			System.out.print(',');
 		}
 		System.out.println(";");
-	}
-
-	@Override
-	public void acceptSomeEnums(List<SomeEnum> enums) {
-		System.out.printf("BasicSomeListEvaluator has accepted enums: ");
-		for (SomeEnum aEnum : enums) {
-			System.out.print(aEnum);
-			System.out.print(',');
-		}
-		System.out.println(";");
-	}
-
-	@Override
-	public List<SomeEnum> provideSomeEnums() {
-		List<SomeEnum> result = new ArrayList<>();
-		result.add(SomeEnum.SecondValue);
-		result.add(SomeEnum.LastValue);
-		result.add(SomeEnum.FirstValue);
-		return result;
 	}
 
 	@Override
@@ -95,5 +76,6 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 		};
 		return ByteBuffer.wrap(byteValue);
 	}
+
 
 }

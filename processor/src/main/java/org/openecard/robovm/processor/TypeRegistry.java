@@ -76,10 +76,6 @@ public class TypeRegistry {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSString *");
 			typeLookup.put(type, desc);
 			return desc;
-		} else if (symbolName.equals("java.lang.Integer")) {
-			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "int");
-			typeLookup.put(type, desc);
-			return desc;
 		} else if (symbolName.equals("java.nio.ByteBuffer")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
 			desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteBufferNSDataMarshaller");

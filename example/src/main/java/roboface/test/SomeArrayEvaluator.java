@@ -39,11 +39,7 @@ public interface SomeArrayEvaluator extends Serializable {
 			ByteBuffer thirdBytes,
 			ByteBuffer lastBytes);
 
-	void acceptListIntegers(List<Integer> ints);
-
-	void acceptSomeEnums(List<SomeEnum> enums);
-
-	List<SomeEnum> provideSomeEnums();
+	void acceptListStrings(List<String> vals);
 
 	ByteBuffer provideAByteBuffer();
 }
