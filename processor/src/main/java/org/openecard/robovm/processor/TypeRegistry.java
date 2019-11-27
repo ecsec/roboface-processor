@@ -81,6 +81,11 @@ public class TypeRegistry {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "int");
 			typeLookup.put(type, desc);
 			return desc;
+		} else if (symbolName.equals("java.nio.ByteBuffer")) {
+			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
+			desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteBufferNSDataMarshaller");
+			typeLookup.put(type, desc);
+			return desc;
 		} else if (type.getTag() == TypeTag.ARRAY) {
 			final Type innerType = ((Type.ArrayType) type).getComponentType();
 			if (innerType.isPrimitive() && innerType.tsym.getSimpleName().toString().equals("byte")) {

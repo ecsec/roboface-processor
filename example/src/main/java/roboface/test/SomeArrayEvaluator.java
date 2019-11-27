@@ -22,6 +22,7 @@
 package roboface.test;
 
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.List;
 import org.openecard.robovm.annotations.FrameworkInterface;
 
@@ -39,4 +40,6 @@ public interface SomeArrayEvaluator extends Serializable {
 	byte[] acceptSomeEnums(List<SomeEnum> enums);
 
 	List<SomeEnum> provideSomeEnums();
+
+	ByteBuffer provideAByteBuffer();
 }

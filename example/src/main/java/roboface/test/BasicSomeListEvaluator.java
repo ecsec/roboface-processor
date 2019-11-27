@@ -21,6 +21,7 @@
  ***************************************************************************/
 package roboface.test;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,6 +77,14 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 		result.add("another one");
 		result.add("the last string value");
 		return result;
+	}
+
+	@Override
+	public ByteBuffer provideAByteBuffer() {
+		byte[] byteValue = new byte[] {
+			-3,-2,-1,0,1,2,3,
+		};
+		return ByteBuffer.wrap(byteValue);
 	}
 
 }
