@@ -33,11 +33,15 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeArrayEvaluator extends Serializable {
 
-	List<String> provideStringsFromBytes(byte[] bytes, byte[] secondBytes, byte[] thirdBytes, byte[] lastBytes);
+	List<String> provideStringsFromByteBuffer(
+			ByteBuffer bytes,
+			ByteBuffer secondBytes,
+			ByteBuffer thirdBytes,
+			ByteBuffer lastBytes);
 
 	void acceptListIntegers(List<Integer> ints);
 
-	byte[] acceptSomeEnums(List<SomeEnum> enums);
+	void acceptSomeEnums(List<SomeEnum> enums);
 
 	List<SomeEnum> provideSomeEnums();
 

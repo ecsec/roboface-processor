@@ -11,7 +11,6 @@ package org.openecard.robovm.processor;
 
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Type;
-import com.sun.tools.javac.code.TypeTag;
 import com.sun.tools.javac.tree.JCTree;
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,14 +85,6 @@ public class TypeRegistry {
 			desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteBufferNSDataMarshaller");
 			typeLookup.put(type, desc);
 			return desc;
-		} else if (type.getTag() == TypeTag.ARRAY) {
-			final Type innerType = ((Type.ArrayType) type).getComponentType();
-			if (innerType.isPrimitive() && innerType.tsym.getSimpleName().toString().equals("byte")) {
-				PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSData *");
-				desc.setMarshaller("org.openecard.tools.roboface.marshaller.ByteArrayNSDataMarshaller");
-				typeLookup.put(type, desc);
-				return desc;
-			}
 		}
 
 		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);

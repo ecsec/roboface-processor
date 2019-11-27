@@ -42,16 +42,13 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 	}
 
 	@Override
-	public byte[] acceptSomeEnums(List<SomeEnum> enums) {
+	public void acceptSomeEnums(List<SomeEnum> enums) {
 		System.out.printf("BasicSomeListEvaluator has accepted enums: ");
 		for (SomeEnum aEnum : enums) {
 			System.out.print(aEnum);
 			System.out.print(',');
 		}
 		System.out.println(";");
-		return new byte[]{
-			Byte.MIN_VALUE, 0, 1, 2, 3, 4, 5, 6, Byte.MAX_VALUE
-		};
 	}
 
 	@Override
@@ -64,19 +61,31 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 	}
 
 	@Override
-	public List<String> provideStringsFromBytes(byte[] bytes, byte[] secondBytes, byte[] thirdBytes, byte[] lastBytes) {
+	public List<String> provideStringsFromByteBuffer(
+			ByteBuffer bytes,
+			ByteBuffer secondBytes,
+			ByteBuffer thirdBytes,
+			ByteBuffer lastBytes) {
 		System.out.printf("BasicSomeListEvaluator is providing Strings given bytes: ");
-		for (int i = 0; i < bytes.length; i++) {
-			byte aByte = bytes[i];
-			System.out.print(aByte);
-			System.out.print(',');
-		}
-		System.out.println(";");
+		printByteArray(bytes);
+		printByteArray(secondBytes);
+		printByteArray(thirdBytes);
+		printByteArray(lastBytes);
 		List<String> result = new ArrayList<>();
 		result.add("some stringy value");
 		result.add("another one");
 		result.add("the last string value");
 		return result;
+	}
+
+	private void printByteArray(ByteBuffer bytes) {
+		byte[] values = bytes.array();
+		for (int i = 0; i < values.length; i++) {
+			byte aByte = values[i];
+			System.out.print(aByte);
+			System.out.print(',');
+		}
+		System.out.println(";");
 	}
 
 	@Override
