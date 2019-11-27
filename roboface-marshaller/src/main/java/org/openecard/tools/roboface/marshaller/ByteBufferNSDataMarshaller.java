@@ -11,6 +11,8 @@ package org.openecard.tools.roboface.marshaller;
 
 import java.nio.ByteBuffer;
 import org.robovm.apple.foundation.NSData;
+import org.robovm.apple.foundation.NSObject;
+import org.robovm.rt.bro.annotation.MarshalsPointer;
 import org.robovm.rt.bro.annotation.MarshalsValue;
 
 /**
@@ -19,14 +21,21 @@ import org.robovm.rt.bro.annotation.MarshalsValue;
  */
 public class ByteBufferNSDataMarshaller {
 
-	@MarshalsValue
-	public static ByteBuffer toObject(Class<?> cls, NSData value, long flags) {
-		return ByteBuffer.wrap(value.getBytes());
+	@MarshalsPointer
+	public static ByteBuffer toObject(Class<NSData> cls, long handle, long flags) {
+		if (handle == 0L) {
+			return null;
+		}
+		NSData nsData = (NSData)NSObject.Marshaler.toObject(cls, handle, flags);
+		return ByteBuffer.wrap(nsData.getBytes());
 	}
 
 	@MarshalsValue
-	public static NSData toNative(ByteBuffer v, long flags) {
-		return new NSData(v);
+	public static long toNative(ByteBuffer v, long flags) {
+		if (v == null) {
+			return 0L;
+		}
+		return NSObject.Marshaler.toNative(new NSData(v), flags);
 	}
 
 }
