@@ -93,26 +93,4 @@ public class PrimitiveDescriptor implements TypeDescriptor {
 		return new PrimitiveDescriptor(type, converted);
 	}
 
-	private static String convertSimpleType(String type) {
-		switch (type) {
-			case "void": return "void";
-			case "Boolean":
-			case "boolean": return "bool";
-			case "Byte":
-			case "byte": return "char";
-			case "Integer":
-			case "int": return "int";
-			case "Short":
-			case "short": return "short";
-			case "Long":
-			case "long": return "long";
-			case "Float":
-			case "float": return "float";
-			case "Double":
-			case "double": return "double";
-			case "String": return "NSString *";
-			default: return String.format("NSObject<%s> *", type);
-		}
-	}
-
 }
