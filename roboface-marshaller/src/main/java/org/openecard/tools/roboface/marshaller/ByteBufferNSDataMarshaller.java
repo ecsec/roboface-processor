@@ -22,11 +22,11 @@ import org.robovm.rt.bro.annotation.MarshalsValue;
 public class ByteBufferNSDataMarshaller {
 
 	@MarshalsPointer
-	public static ByteBuffer toObject(Class<NSData> cls, long handle, long flags) {
+	public static ByteBuffer toObject(Class<?> cls, long handle, long flags) {
 		if (handle == 0L) {
 			return null;
 		}
-		NSData nsData = (NSData)NSObject.Marshaler.toObject(cls, handle, flags);
+		NSData nsData = (NSData)NSObject.Marshaler.toObject(NSData.class, handle, flags);
 		return ByteBuffer.wrap(nsData.getBytes());
 	}
 
