@@ -42,16 +42,8 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 	}
 
 	@Override
-	public List<String> provideStringsFromByteBuffer(
-			ByteBuffer bytes,
-			ByteBuffer secondBytes,
-			ByteBuffer thirdBytes,
-			ByteBuffer lastBytes) {
-		System.out.printf("BasicSomeListEvaluator is providing Strings given bytes: ");
-		printByteArray(bytes);
-		printByteArray(secondBytes);
-		printByteArray(thirdBytes);
-		printByteArray(lastBytes);
+	public List<String> provideStrings() {
+		System.out.printf("BasicSomeListEvaluator is providing Strings");
 		List<String> result = new ArrayList<>();
 		result.add("some stringy value");
 		result.add("another one");
@@ -75,6 +67,15 @@ public class BasicSomeListEvaluator implements SomeArrayEvaluator {
 			-3,-2,-1,0,1,2,3,
 		};
 		return ByteBuffer.wrap(byteValue);
+	}
+
+	@Override
+	public void acceptByteBuffers(ByteBuffer bytes, ByteBuffer secondBytes, ByteBuffer thirdBytes, ByteBuffer lastBytes) {
+		System.out.printf("BasicSomeListEvaluator is accepting bytes");
+		printByteArray(bytes);
+		printByteArray(secondBytes);
+		printByteArray(thirdBytes);
+		printByteArray(lastBytes);
 	}
 
 
