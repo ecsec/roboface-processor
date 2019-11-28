@@ -13,7 +13,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<robovm.version>2.3.8-SNAPSHOT</robovm.version>
+		<robovm.version>2.3.8</robovm.version>
 	</properties>
 
 	<dependencies>
