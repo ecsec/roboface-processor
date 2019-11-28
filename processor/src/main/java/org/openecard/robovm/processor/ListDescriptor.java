@@ -9,25 +9,36 @@
  ************************************************************************** */
 package org.openecard.robovm.processor;
 
+import com.sun.tools.javac.code.Type;
+
 /**
  *
  * @author Neil Crossley
  */
 public class ListDescriptor implements TypeDescriptor {
 
-	private final TypeDescriptor descriptor;
+	private final LookupTypeDescriptor referencingType;
+	private final Type innerType;
+	private final String symbolName;
 
-	public ListDescriptor(TypeDescriptor descriptor) {
-		this.descriptor = descriptor;
+	ListDescriptor(Type innerType, LookupTypeDescriptor referencingType) {
+		this.innerType = innerType;
+		this.referencingType = referencingType;
+		this.symbolName = innerType.tsym.toString();
 	}
 
 	@Override
 	public String getIosType() {
-		return String.format("NSArray<%s> *", descriptor.getIosType());
+		return String.format("NSArray<%s> *", referencingType.getIosType());
 	}
 
 	@Override
 	public String marshaller() {
+		if (symbolName.equals("java.lang.String")) {
+			return "org.robovm.apple.foundation.NSArray.AsStringListMarshaler";
+		} else if (symbolName.equals("java.lang.Integer")) {
+			return "org.robovm.apple.foundation.NSArray.AsIntegerListMarshaler";
+		}
 		return "org.robovm.apple.foundation.NSArray.AsListMarshaler";
 	}
 

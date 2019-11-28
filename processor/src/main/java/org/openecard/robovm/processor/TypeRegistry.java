@@ -69,11 +69,15 @@ public class TypeRegistry {
 			if (innerType.isPrimitiveOrVoid()) {
 				throw new IllegalArgumentException("Cannot wrap ");
 			}
-			ListDescriptor desc = new ListDescriptor(getReferencingType(innerType));
+			ListDescriptor desc = new ListDescriptor(innerType, getReferencingType(innerType));
 			typeLookup.put(type, desc);
 			return desc;
 		} else if (symbolName.equals("java.lang.String")) {
 			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSString *");
+			typeLookup.put(type, desc);
+			return desc;
+		} else if (symbolName.equals("java.lang.Integer")) {
+			PrimitiveDescriptor desc = new PrimitiveDescriptor(type, "NSNumber *");
 			typeLookup.put(type, desc);
 			return desc;
 		} else if (symbolName.equals("java.nio.ByteBuffer")) {
