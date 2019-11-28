@@ -60,7 +60,7 @@
 			<groupId>org.openecard.tools</groupId>
 			<artifactId>roboface-marshaller</artifactId>
 			<version>${project.version}</version>
-			<optional>true</optional>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
