@@ -79,6 +79,7 @@
 	<modules>
 		<module>annotation</module>
 		<module>processor</module>
+		<module>preprocess-example</module>
 		<module>example</module>
 		<module>roboface-marshaller</module>
 		<module>frameworkexample</module>

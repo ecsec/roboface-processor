@@ -64,6 +64,7 @@
 								<configuration>
 									<includeArtifactIds>roboface-example</includeArtifactIds>
 									<outputDirectory>${basedir}/target/classes/</outputDirectory>
+									<includes>/roboheaders/*</includes>
 								</configuration>
 							</execution>
 						</executions>
