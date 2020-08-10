@@ -27,6 +27,41 @@
 		<url>https://github.com/ecsec/open-ecard</url>
 		<tag>HEAD</tag>
 	</scm>
+	<repositories>
+		<repository>
+			<id>openecard-repos</id>
+			<name>Openecard Repos</name>
+			<url>https://mvn.ecsec.de/repository/openecard-public</url>
+		</repository>
+		<repository>
+			<id>snapshots-repo</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>openecard-repos</id>
+			<url>https://mvn.ecsec.de/repository/openecard-public</url>
+		</pluginRepository>
+		
+		<pluginRepository>
+			<id>snapshots-repo</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
 
 	<distributionManagement>
 		<repository>
@@ -44,6 +79,7 @@
 	<modules>
 		<module>annotation</module>
 		<module>processor</module>
+		<module>preprocess-example</module>
 		<module>example</module>
 		<module>roboface-marshaller</module>
 		<module>frameworkexample</module>

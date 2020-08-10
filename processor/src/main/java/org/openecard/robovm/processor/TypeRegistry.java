@@ -58,6 +58,12 @@ public class TypeRegistry {
 		if (typeLookup.containsKey(type)) {
 			return typeLookup.get(type);
 		}
+		if (type.tsym.isEnum()) {
+			EnumDescriptor desc = new EnumDescriptor(type.tsym.getSimpleName().toString());
+			typeLookup.put(type, desc);
+			return desc;
+
+		}
 		if (type.isPrimitiveOrVoid()) {
 			PrimitiveDescriptor desc = PrimitiveDescriptor.from(type);
 			typeLookup.put(type, desc);

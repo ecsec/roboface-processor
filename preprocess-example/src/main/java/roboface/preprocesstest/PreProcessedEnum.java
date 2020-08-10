@@ -19,31 +19,19 @@
  * you and ecsec GmbH.
  *
  ***************************************************************************/
+package roboface.preprocesstest;
 
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
-import roboface.preprocesstest.PreProcessedEnum;
-import roboface.preprocesstest.PreProcessedObject;
+import org.openecard.robovm.annotations.FrameworkEnum;
 
 /**
  *
- * @author Tobias Wich
- * @author Florian Otto
+ * @author Neil Crossley
  */
-@FrameworkInterface
-public interface MyFrameworkInterface {
+@FrameworkEnum
+public enum PreProcessedEnum {
 
-	void fun();
-	void fun(String s);
-	void otherfun(int i);
-
-	void preProcObj(PreProcessedObject obj);
-
-	void preProcEnum(PreProcessedEnum enu);
-
-	SomeInterface getSomeImp();
-	SomeInterface.SomeInnerInterface getSomeInnerImp();
-
-	SomeArrayEvaluator arrayUsageExample();
+	FirstValue,
+	SecondValue,
+	ThirdValue,
+	LastValue,
 }

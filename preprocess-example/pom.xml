@@ -8,39 +8,17 @@
 	</parent>
 
 	<groupId>org.openecard.tools</groupId>
-	<artifactId>roboface-example</artifactId>
+	<artifactId>roboface-preprocess-example</artifactId>
 	<packaging>jar</packaging>
-	<name>Roboface Annotation Processor Example</name>
+	<name>Roboface Annotation Processor PreProcessExample</name>
 
 	<properties>
 		<robovm.version>2.3.10-oec1</robovm.version>
 	</properties>
 
 	<build>
-<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<version>3.1.1</version>
-						<executions>
-							<execution>
-								<id>copy-framework-classes</id>
-								<goals>
-									<goal>unpack-dependencies</goal>
-								</goals>
-								<configuration>
-									<includeArtifactIds>roboface-pre-process-example</includeArtifactIds>
-									<outputDirectory>${basedir}/target/classes/</outputDirectory>
-									<includes>/roboheaders/*</includes>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-
-</plugins>
 		<pluginManagement>
 			<plugins>
-
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
@@ -56,8 +34,7 @@
 							<proc>org.openecard.robovm.processor.RobofaceProcessor</proc>
 						</annotationProcessors>
 						<compilerArgs>
-							<arg>-Aroboface.headername=my_robo_header.h</arg>
-							<arg>-Aroboface.include.headers=my_robo_pre_header.h</arg>
+							<arg>-Aroboface.headername=my_robo_pre_header.h</arg>
 							<arg>-Aroboface.inheritance.blacklist=java.io.Serializable</arg>
 						</compilerArgs>
 						<debug>true</debug>
@@ -97,11 +74,6 @@
 			<artifactId>robovm-cocoatouch</artifactId>
 			<version>${robovm.version}</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>${project.groupId}</groupId>
-			<artifactId>roboface-preprocess-example</artifactId>
-			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 

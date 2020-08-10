@@ -23,6 +23,8 @@
 package roboface.test;
 
 import org.openecard.robovm.annotations.FrameworkObject;
+import roboface.preprocesstest.PreProcessedEnum;
+import roboface.preprocesstest.PreProcessedObject;
 
 
 /**
@@ -56,6 +58,16 @@ public class MyFrameworkImplementation implements MyFrameworkInterface {
 	@Override
 	public SomeArrayEvaluator arrayUsageExample() {
 		return new BasicSomeListEvaluator();
+	}
+
+	@Override
+	public void preProcObj(PreProcessedObject obj) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+	}
+
+	@Override
+	public void preProcEnum(PreProcessedEnum enu) {
+		throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
 	}
 
 }
