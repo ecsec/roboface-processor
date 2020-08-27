@@ -28,8 +28,8 @@ When using a maven setup, the compiler plugin and the dependencies should look a
 
 ```XML
 <properties>
-	<robovm.version>2.3.7</robovm.version>
-	<roboface.version>1.0.0</roboface.version>
+	<robovm.version>2.3.10-oec1</robovm.version>
+	<roboface.version>1.0.1</roboface.version>
 </properties>
 
 <repositories>
