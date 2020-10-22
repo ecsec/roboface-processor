@@ -37,16 +37,22 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 	private final String objcName;
 	private final List<DeclarationDescriptor> extensions;
 	private final List<MethodDescriptor> methods;
+	private final IosType type;
 
-	public ProtocolDescriptor(String ifaceName, List<DeclarationDescriptor> implementing) {
+	public ProtocolDescriptor(String ifaceName, List<DeclarationDescriptor> implementing, IosType type) {
 		this.objcName = ifaceName;
 		this.methods = new ArrayList<>();
 		this.extensions = implementing;
+		this.type = type;
 	}
 
 	@Override
 	public String getObjcName() {
 		return objcName;
+	}
+
+	public IosType getType() {
+		return this.type;
 	}
 
 	public void addMethod(MethodDescriptor method) {
@@ -75,5 +81,10 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 	@Override
 	public String marshaller() {
 		return null;
+	}
+
+	public static enum IosType {
+		Interface,
+		Protocol;
 	}
 }

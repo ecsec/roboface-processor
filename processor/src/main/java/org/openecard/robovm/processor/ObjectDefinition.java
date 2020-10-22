@@ -33,12 +33,12 @@ public class ObjectDefinition {
 
 	private final String javaName;
 	private final String factoryName;
-	private final List<String> ifaces;
+	private final ProtocolDescriptor protocol;
 
-	public ObjectDefinition(String javaName, String factoryName, List<String> ifaces) {
+	public ObjectDefinition(String javaName, String factoryName, ProtocolDescriptor protocol) {
 		this.javaName = javaName;
 		this.factoryName = factoryName;
-		this.ifaces = ifaces;
+		this.protocol = protocol;
 	}
 
 	public String getFactoryMethodName() {
@@ -46,10 +46,10 @@ public class ObjectDefinition {
 	}
 
 	public <T extends DeclarationDescriptor> String getProtocolName(List<T> protocols) {
-		for (String iface : ifaces) {
+		for (DeclarationDescriptor iface : this.protocol.getExtensions()) {
 			for (DeclarationDescriptor pd : protocols) {
-				if (iface.equals(pd.getObjcName())) {
-					return iface;
+				if (iface.getObjcName().equals(pd.getObjcName())) {
+					return iface.getObjcName();
 				}
 			}
 		}
@@ -60,5 +60,6 @@ public class ObjectDefinition {
 	public String getJavaName() {
 		return javaName;
 	}
+
 
 }

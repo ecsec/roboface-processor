@@ -66,9 +66,7 @@ public class HeaderGenerator {
 			w.println();
 
 			for (ObjectDefinition o : objects) {
-				writeObject(w, o);
-				//only create one object for framework entry
-				break;
+				writeInitiatorFunction(w, o);
 			}
 		}
 	}
@@ -90,22 +88,33 @@ public class HeaderGenerator {
 	private void writeForwardDecl(PrintWriter w, ProtocolDescriptor p) {
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s;%n", objcName);
+		String iosType = p.getType() == ProtocolDescriptor.IosType.Interface ?
+				"interface" : "protocol";
+
+		w.printf("@%s %s;%n", iosType, objcName);
 	}
 
 	private void writeProtocol(PrintWriter w, ProtocolDescriptor p) {
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s", objcName);
+		boolean isProtocol = p.getType() == ProtocolDescriptor.IosType.Protocol;
+		String iosType = isProtocol ? "protocol" : "interface";
+		w.printf("@%s %s", iosType, objcName);
 		// add protocol inheritance
 		if (! p.getExtensions().isEmpty()) {
-			w.print("<");
+			if (isProtocol) {
+				w.print("<");
+			} else {
+				w.print(" : ");
+			}
 			String prefix = "";
 			for (DeclarationDescriptor ext : p.getExtensions()) {
 				w.printf("%s%s", prefix, ext.getObjcName());
 				prefix = ", ";
 			}
-			w.print(">");
+			if (isProtocol) {
+				w.print(">");
+			}
 		}
 		w.println();
 
@@ -114,7 +123,9 @@ public class HeaderGenerator {
 		}
 
 		w.println("@end");
-		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		if (isProtocol) {
+			w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		}
 		w.println();
 	}
 
@@ -124,7 +135,7 @@ public class HeaderGenerator {
 		w.println(";");
 	}
 
-	private void writeObject(PrintWriter w, ObjectDefinition o) {
+	private void writeInitiatorFunction(PrintWriter w, ObjectDefinition o) {
 		String protocolName = o.getProtocolName(this.registry.getProtocols());
 		w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
 		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);

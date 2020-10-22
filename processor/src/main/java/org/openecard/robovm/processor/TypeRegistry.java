@@ -99,7 +99,10 @@ public class TypeRegistry {
 
 	private ProtocolDescriptor addFakeProtocolDescriptor(Type type) {
 		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), new LinkedList<>());
+		ProtocolDescriptor descriptor = new ProtocolDescriptor(
+				type.tsym.getSimpleName().toString(),
+				new LinkedList<>(),
+				ProtocolDescriptor.IosType.Protocol);
 		this.typeLookup.put(type, descriptor);
 		this.declarationLookup.put(type, descriptor);
 		return descriptor;
@@ -128,10 +131,18 @@ public class TypeRegistry {
 		return result;
 	}
 
-	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd) {
+	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd, ProtocolDescriptor.IosType type) {
 		final String simpleName = ccd.getSimpleName().toString();
-		final List<DeclarationDescriptor> inheritanceTypes = new LinkedList<>();
+		List<DeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
 
+		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes, type);
+		typeLookup.put(ccd.sym.type, descriptor);
+		protocols.add(descriptor);
+		return descriptor;
+	}
+
+	private List<DeclarationDescriptor> findInheritanceTypes(JCTree.JCClassDecl ccd, final String simpleName) {
+		final List<DeclarationDescriptor> inheritanceTypes = new LinkedList<>();
 		ccd.implementing.forEach((nextIface) -> {
 			if (nextIface.getKind() == Tree.Kind.IDENTIFIER) {
 				String fullname = nextIface.type.asElement().enclClass().className();
@@ -145,11 +156,7 @@ public class TypeRegistry {
 			};
 
 		});
-
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes);
-		typeLookup.put(ccd.sym.type, descriptor);
-		protocols.add(descriptor);
-		return descriptor;
+		return inheritanceTypes;
 	}
 
 	public MethodDescriptor createMethodDescriptor(String name, Type type) {
