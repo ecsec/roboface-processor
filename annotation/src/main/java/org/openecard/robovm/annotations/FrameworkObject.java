@@ -39,6 +39,7 @@ public @interface FrameworkObject {
 	/**
 	 * Name of the factory function added to the ObjC header.
 	 */
+	@Deprecated
 	public String factoryMethod();
 
 }
