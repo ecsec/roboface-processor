@@ -25,6 +25,10 @@ public class LookupDeclarationDescriptor implements DeclarationDescriptor {
 		this.registry = registry;
 	}
 
+	public Type getType() {
+		return givenType;
+	}
+
 	@Override
 	public String getObjcName() {
 		return this.registry.asDeclaration(this.givenType).getObjcName();

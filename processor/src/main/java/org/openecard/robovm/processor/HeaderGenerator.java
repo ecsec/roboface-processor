@@ -22,10 +22,13 @@
 
 package org.openecard.robovm.processor;
 
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Types;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -37,11 +40,17 @@ public class HeaderGenerator {
 	private final List<ObjectDefinition> objects;
 	private final List<IncludeHeaderDefinition> includes;
 	private final TypeRegistry registry;
+	private final Types types;
 
-	public HeaderGenerator(List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeRegistry registry) {
+	public HeaderGenerator(
+			List<ObjectDefinition> objects,
+			List<IncludeHeaderDefinition> includes,
+			TypeRegistry registry,
+			Types types) {
 		this.objects = objects;
 		this.includes = includes;
 		this.registry = registry;
+		this.types = types;
 	}
 
 	public void writeHeader(Writer headerWriter) {
@@ -55,14 +64,18 @@ public class HeaderGenerator {
 			}
 			w.println();
 
-			for (ProtocolDescriptor p : sortProtocols(registry.getProtocols())) {
-				writeForwardDecl(w, p);
+			List<Map.Entry<Type, ProtocolDescriptor>> sortedClass = sortProtocols(registry.protocols);
+			for (Map.Entry<Type, ProtocolDescriptor> entry : sortedClass) {
+				writeForwardDecl(w, entry.getValue());
 			}
 			w.println();
 
-			for (ProtocolDescriptor p : registry.getProtocols()) {
-				writeProtocol(w, p);
+			for (Map.Entry<Type, ProtocolDescriptor> values : sortedClass) {
+				Type key = values.getKey();
+				ProtocolDescriptor p = values.getValue();
+				writeProtocol(w, key, p);
 			}
+
 			w.println();
 
 			for (ObjectDefinition o : objects) {
@@ -94,17 +107,22 @@ public class HeaderGenerator {
 		w.printf("@%s %s;%n", iosType, objcName);
 	}
 
-	private void writeProtocol(PrintWriter w, ProtocolDescriptor p) {
+	private void writeProtocol(PrintWriter w, Type type, ProtocolDescriptor p) {
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		boolean isProtocol = p.getType() == ProtocolDescriptor.IosType.Protocol;
-		String iosType = isProtocol ? "protocol" : "interface";
+		boolean isInterface = p.getType() == ProtocolDescriptor.IosType.Interface;
+		String iosType = isProtocol
+				? "protocol"
+				: (isInterface
+						? "interface"
+						: "unknown");
 		w.printf("@%s %s", iosType, objcName);
 		// add protocol inheritance
-		if (! p.getExtensions().isEmpty()) {
+		if (!p.getExtensions().isEmpty()) {
 			if (isProtocol) {
 				w.print("<");
-			} else {
+			} else if (isInterface) {
 				w.print(" : ");
 			}
 			String prefix = "";
@@ -116,10 +134,18 @@ public class HeaderGenerator {
 				w.print(">");
 			}
 		}
-		w.println();
+		if (isInterface) {
+			w.println(" {");
+			w.println("}");
+		} else if (isProtocol) {
+			w.println();
+		}
 
 		for (MethodDescriptor md : p.getMethods()) {
-			writeMethod(w, md);
+			boolean overrides = isOverridingMethod(md, p, type);
+			if (!overrides) {
+				this.writeMethod(w, md);
+			}
 		}
 
 		w.println("@end");
@@ -127,6 +153,27 @@ public class HeaderGenerator {
 			w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
 		}
 		w.println();
+	}
+
+	private boolean isOverridingMethod(MethodDescriptor method, ProtocolDescriptor owner, Type ownerType) {
+		boolean overrides = false;
+		for (LookupDeclarationDescriptor extension : owner.getExtensions()) {
+			final Type inheritedType = extension.getType();
+			ProtocolDescriptor protocol = this.registry.protocols.get(inheritedType);
+			if (protocol != null) {
+				for (MethodDescriptor inheritedMethod : protocol.getMethods()) {
+
+					if (method.getMethodSymbol().overrides(inheritedMethod.getMethodSymbol(), ownerType.tsym, types, false)) {
+						overrides = true;
+						break;
+					}
+				}
+			}
+			if (overrides) {
+				break;
+			}
+		}
+		return overrides;
 	}
 
 	private void writeMethod(PrintWriter w, MethodDescriptor md) {
@@ -159,12 +206,13 @@ public class HeaderGenerator {
 
 	}
 
-	private List<ProtocolDescriptor> sortProtocols(List<ProtocolDescriptor> input) {
-		List<ProtocolDescriptor> protocols = new ArrayList<>(input.size());
-		for (ProtocolDescriptor next : input) {
+	private List<Map.Entry<Type, ProtocolDescriptor>> sortProtocols(Map<Type, ProtocolDescriptor> input) {
+		List<Map.Entry<Type, ProtocolDescriptor>> protocols = new ArrayList<>(input.size());
+		for (Map.Entry<Type, ProtocolDescriptor> entry : input.entrySet()) {
+			ProtocolDescriptor next = entry.getValue();
 			if (next.getExtensions().isEmpty()) {
 				// no dependency, insert at the beginning right away
-				protocols.add(0, next);
+				protocols.add(0, entry);
 			} else {
 				// we want to insert this element after the last element of the extension list
 				// or if something is missing, insert it at the foremost position, so that a later insertion will if in
@@ -175,7 +223,8 @@ public class HeaderGenerator {
 					extensionNames.add(extension.getObjcName());
 				}
 				for (int i = 0; i < protocols.size(); i++) {
-					ProtocolDescriptor testObj = protocols.get(i);
+					Map.Entry<Type, ProtocolDescriptor> testEntry = protocols.get(i);
+					ProtocolDescriptor testObj = testEntry.getValue();
 					// remove and see if an element has been removed actually
 					if (extensionNames.remove(testObj.getObjcName())) {
 						// advance insertion index to the position after this element
@@ -187,7 +236,7 @@ public class HeaderGenerator {
 					}
 				}
 				// add the element at the correct psoition
-				protocols.add(idx, next);
+				protocols.add(idx, entry);
 			}
 		}
 		return protocols;

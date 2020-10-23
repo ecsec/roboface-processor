@@ -10,8 +10,10 @@
 package org.openecard.robovm.processor;
 
 import com.sun.source.tree.Tree;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -29,7 +31,7 @@ public class TypeRegistry {
 	Map<Type, DeclarationDescriptor> declarationLookup = new HashMap<>();
 
 	List<EnumDescriptor> enums = new LinkedList<>();
-	List<ProtocolDescriptor> protocols = new LinkedList<>();
+	Map<Type, ProtocolDescriptor> protocols = new HashMap<>();
 
 	private final Set<String> inheritanceBlacklist;
 
@@ -42,7 +44,7 @@ public class TypeRegistry {
 	}
 
 	public List<ProtocolDescriptor> getProtocols() {
-		return Collections.unmodifiableList(protocols);
+		return Collections.unmodifiableList(new ArrayList<>(protocols.values()));
 	}
 
 	DeclarationDescriptor asDeclaration(Type type) {
@@ -133,16 +135,16 @@ public class TypeRegistry {
 
 	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd, ProtocolDescriptor.IosType type) {
 		final String simpleName = ccd.getSimpleName().toString();
-		List<DeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
+		List<LookupDeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
 
 		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes, type);
 		typeLookup.put(ccd.sym.type, descriptor);
-		protocols.add(descriptor);
+		protocols.put(ccd.sym.type, descriptor);
 		return descriptor;
 	}
 
-	private List<DeclarationDescriptor> findInheritanceTypes(JCTree.JCClassDecl ccd, final String simpleName) {
-		final List<DeclarationDescriptor> inheritanceTypes = new LinkedList<>();
+	private List<LookupDeclarationDescriptor> findInheritanceTypes(JCTree.JCClassDecl ccd, final String simpleName) {
+		final List<LookupDeclarationDescriptor> inheritanceTypes = new LinkedList<>();
 		ccd.implementing.forEach((nextIface) -> {
 			if (nextIface.getKind() == Tree.Kind.IDENTIFIER) {
 				String fullname = nextIface.type.asElement().enclClass().className();
@@ -153,15 +155,59 @@ public class TypeRegistry {
 				} else {
 					System.out.printf("Blacklisting inheritance %s from %s\n", simpleName, fullname);
 				}
-			};
-
+			}
 		});
 		return inheritanceTypes;
 	}
 
-	public MethodDescriptor createMethodDescriptor(String name, Type type) {
-		MethodDescriptor descriptor = new MethodDescriptor(name,
-				getReturnType(type));
+	public MethodDescriptor createMethod(JCTree.JCMethodDecl tree) {
+
+		Symbol.MethodSymbol methodSymbol = tree.sym;
+		boolean hasOverrideAnnotation = false;
+
+		for (JCTree.JCAnnotation annotation : tree.getModifiers().getAnnotations()) {
+			if ("java.lang.Override".equals(annotation.attribute.type.tsym.toString())) {
+				hasOverrideAnnotation = true;
+			}
+		}
+
+		switch (methodSymbol.getKind()) {
+			case CONSTRUCTOR: {
+				return this.createConstructorDescriptor(
+						methodSymbol);
+			}
+			case METHOD: {
+				return this.createMethodDescriptor(
+						tree.name.toString(),
+						tree.getReturnType().type,
+						methodSymbol,
+						hasOverrideAnnotation);
+			}
+			default:
+				return null;
+		}
+	}
+
+	private MethodDescriptor createMethodDescriptor(
+			String name,
+			Type returntype,
+			Symbol.MethodSymbol methodSymbol,
+			boolean hasOverrideAnnotation) {
+		MethodDescriptor descriptor = new MethodDescriptor(
+				name,
+				getReturnType(returntype),
+				methodSymbol,
+				hasOverrideAnnotation
+		);
+
+		return descriptor;
+	}
+
+	private MethodDescriptor createConstructorDescriptor(Symbol.MethodSymbol methodSymbol) {
+		MethodDescriptor descriptor = new MethodDescriptor(
+				"init",
+				new KeywordDescriptor("id"),
+				methodSymbol, false);
 
 		return descriptor;
 	}

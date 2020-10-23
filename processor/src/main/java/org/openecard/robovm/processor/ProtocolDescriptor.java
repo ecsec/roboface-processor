@@ -35,11 +35,11 @@ import java.util.List;
 public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String objcName;
-	private final List<DeclarationDescriptor> extensions;
+	private final List<LookupDeclarationDescriptor> extensions;
 	private final List<MethodDescriptor> methods;
 	private final IosType type;
 
-	public ProtocolDescriptor(String ifaceName, List<DeclarationDescriptor> implementing, IosType type) {
+	public ProtocolDescriptor(String ifaceName, List<LookupDeclarationDescriptor> implementing, IosType type) {
 		this.objcName = ifaceName;
 		this.methods = new ArrayList<>();
 		this.extensions = implementing;
@@ -63,7 +63,7 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		return Collections.unmodifiableList(methods);
 	}
 
-	public List<DeclarationDescriptor> getExtensions() {
+	public List<LookupDeclarationDescriptor> getExtensions() {
 		return Collections.unmodifiableList(extensions);
 	}
 

@@ -22,6 +22,7 @@
 
 package org.openecard.robovm.processor;
 
+import com.sun.tools.javac.code.Symbol;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,12 +37,25 @@ public class MethodDescriptor {
 
 	private final String name;
 	private final TypeDescriptor returnType;
+	private final Symbol.MethodSymbol methodSymbol;
 	private final List<MethodParameterDescriptor> params;
+	private final boolean hasOverrideAnnotation;
 
-	public MethodDescriptor(String name, TypeDescriptor returnType) {
+	public MethodDescriptor(
+			String name,
+			TypeDescriptor returnType,
+			Symbol.MethodSymbol methodSymbol,
+			boolean hasOverrideAnnotation
+	) {
 		this.name = name;
 		this.returnType = returnType;
+		this.methodSymbol = methodSymbol;
+		this.hasOverrideAnnotation = hasOverrideAnnotation;
 		this.params = new ArrayList<>();
+	}
+
+	public Symbol.MethodSymbol getMethodSymbol() {
+		return methodSymbol;
 	}
 
 	public void addParam(MethodParameterDescriptor param) {
@@ -60,8 +74,19 @@ public class MethodDescriptor {
 		return name;
 	}
 
+	public boolean isDeprecated() {
+		return methodSymbol.isDeprecated();
+	}
+
+	public boolean hasOverrideAnnotation() {
+		return hasOverrideAnnotation;
+	}
+
 	public void printSignature(PrintWriter w) {
-		w.printf("(%s) %s", this.getReturnType().getIosType(), this.getName());
+		String macroModifier = this.isDeprecated()
+				? " DEPRECATED_ATTRIBUTE"
+				: "";
+		w.printf("(%s) %s%s", this.getReturnType().getIosType(), this.getName(), macroModifier);
 		boolean isFirstParameter = true;
 		for (MethodParameterDescriptor mp : this.params) {
 			final String effectiveParameterType = mp.getType().getIosType();
