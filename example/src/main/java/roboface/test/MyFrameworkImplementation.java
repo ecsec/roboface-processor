@@ -36,6 +36,18 @@ import roboface.preprocesstest.PreProcessedObject;
 @FrameworkObject(factoryMethod = "getFrameworkInstance")
 public class MyFrameworkImplementation implements MyFrameworkInterface {
 
+	static {
+		System.out.print("Static initializer of: ");
+		System.out.println(MyFrameworkImplementation.class);
+	}
+
+	public MyFrameworkImplementation() {
+	}
+
+	public MyFrameworkImplementation(String someValue) {
+
+	}
+
 	//some functions
 	public void fun(){
 		System.out.println("fun was called");
