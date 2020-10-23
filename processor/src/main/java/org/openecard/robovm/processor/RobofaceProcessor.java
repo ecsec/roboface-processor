@@ -413,7 +413,8 @@ public class RobofaceProcessor extends AbstractProcessor {
 				JCTree.JCModifiers modifiers = tree.getModifiers();
 				Set<Modifier> flags = modifiers.getFlags();
 				if (flags.contains(Modifier.PRIVATE)
-						|| flags.contains(Modifier.PROTECTED)) {
+						|| flags.contains(Modifier.PROTECTED)
+						|| flags.contains(Modifier.STATIC)) {
 					System.out.printf(" - Skipping method %s because it has the wrong flags: %s\n", tree.name, tree.mods.getFlags());
 					return;
 				}
