@@ -23,7 +23,6 @@
 package org.openecard.robovm.processor;
 
 import com.sun.tools.javac.code.Symbol;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -77,26 +76,6 @@ public class MethodDescriptor {
 
 	public boolean isDeprecated() {
 		return methodSymbol.isDeprecated();
-	}
-
-	public void printSignature(PrintWriter w) {
-		String macroModifier = this.isDeprecated()
-				? " DEPRECATED_ATTRIBUTE"
-				: "";
-		w.printf("(%s) %s%s", this.getReturnType().getIosType(), this.getName(), macroModifier);
-		boolean isFirstParameter = true;
-		for (MethodParameterDescriptor mp : this.params) {
-			final String effectiveParameterType = mp.getType().getIosType();
-			final String paramName = mp.getName();
-			if (isFirstParameter) {
-				w.printf(":(%s)%s", effectiveParameterType, paramName);
-				isFirstParameter = false;
-			} else {
-				char firstCharacter = Character.toUpperCase(paramName.charAt(0));
-				String remainingChar = paramName.substring(1);
-				w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
-			}
-		}
 	}
 
 	public String asSelector() {

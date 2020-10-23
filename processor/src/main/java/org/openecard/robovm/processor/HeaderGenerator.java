@@ -178,7 +178,7 @@ public class HeaderGenerator {
 
 	private void writeMethod(PrintWriter w, MethodDescriptor md) {
 		w.print("-");
-		md.printSignature(w);
+		writeSignature(w, md);
 		w.println(";");
 	}
 
@@ -193,6 +193,26 @@ public class HeaderGenerator {
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
 		w.println();
+	}
+
+	public void writeSignature(PrintWriter w, MethodDescriptor md) {
+		String macroModifier = md.isDeprecated()
+				? " DEPRECATED_ATTRIBUTE"
+				: "";
+		w.printf("(%s) %s%s", md.getReturnType().getIosType(), md.getName(), macroModifier);
+		boolean isFirstParameter = true;
+		for (MethodParameterDescriptor mp : md.getParameters()) {
+			final String effectiveParameterType = mp.getType().getIosType();
+			final String paramName = mp.getName();
+			if (isFirstParameter) {
+				w.printf(":(%s)%s", effectiveParameterType, paramName);
+				isFirstParameter = false;
+			} else {
+				char firstCharacter = Character.toUpperCase(paramName.charAt(0));
+				String remainingChar = paramName.substring(1);
+				w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
+			}
+		}
 	}
 
 	private void writeEnum(PrintWriter w, EnumDescriptor e){
