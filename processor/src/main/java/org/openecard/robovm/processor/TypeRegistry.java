@@ -103,7 +103,8 @@ public class TypeRegistry {
 		ClassDescriptor descriptor = new ClassDescriptor(
 				type.tsym.getSimpleName().toString(),
 				new LinkedList<>(),
-				ClassDescriptor.ClassType.Protocol);
+				ClassDescriptor.ClassType.Protocol,
+				false);
 		this.typeLookup.put(type, descriptor);
 		this.declarationLookup.put(type, descriptor);
 		return descriptor;
@@ -136,7 +137,12 @@ public class TypeRegistry {
 		final String simpleName = ccd.getSimpleName().toString();
 		List<LookupDeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
 
-		ClassDescriptor descriptor = new ClassDescriptor(simpleName, inheritanceTypes, type);
+		ClassDescriptor descriptor = new ClassDescriptor(
+				simpleName,
+				inheritanceTypes,
+				type,
+				ccd.sym.isDeprecated()
+		);
 		typeLookup.put(ccd.sym.type, descriptor);
 		protocols.put(ccd.sym.type, descriptor);
 		return descriptor;

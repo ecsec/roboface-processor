@@ -108,6 +108,11 @@ public class HeaderGenerator {
 	}
 
 	private void writeProtocol(PrintWriter w, Type type, ClassDescriptor p) {
+		if (p.isDeprecated()) {
+			writeDeprecated(w);
+			w.println();
+		}
+
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
 		boolean isProtocol = p.getClassType() == ClassDescriptor.ClassType.Protocol;
@@ -179,7 +184,15 @@ public class HeaderGenerator {
 	private void writeMethod(PrintWriter w, MethodDescriptor md) {
 		w.print("-");
 		writeSignature(w, md);
+		if (md.isDeprecated()) {
+			w.print(" ");
+			writeDeprecated(w);
+		}
 		w.println(";");
+	}
+
+	private void writeDeprecated(PrintWriter w) {
+		w.print("__attribute__((deprecated))");
 	}
 
 	private void writeInitiatorFunction(PrintWriter w, FactoryDefinition o) {
@@ -188,7 +201,7 @@ public class HeaderGenerator {
 		if (factoryMethod == null) {
 			return;
 		}
-		w.printf("static %s %s() {%n", classDescriptor.getIosType(), factoryMethod);
+		w.printf("static %s %s() __attribute__((deprecated)) {%n", classDescriptor.getIosType(), factoryMethod);
 		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", factoryMethod);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
@@ -196,10 +209,8 @@ public class HeaderGenerator {
 	}
 
 	public void writeSignature(PrintWriter w, MethodDescriptor md) {
-		String macroModifier = md.isDeprecated()
-				? " DEPRECATED_ATTRIBUTE"
-				: "";
-		w.printf("(%s) %s%s", md.getReturnType().getIosType(), md.getName(), macroModifier);
+
+		w.printf("(%s) %s", md.getReturnType().getIosType(), md.getName());
 		boolean isFirstParameter = true;
 		for (MethodParameterDescriptor mp : md.getParameters()) {
 			final String effectiveParameterType = mp.getType().getIosType();

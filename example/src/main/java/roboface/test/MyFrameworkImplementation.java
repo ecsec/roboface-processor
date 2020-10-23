@@ -48,6 +48,10 @@ public class MyFrameworkImplementation implements MyFrameworkInterface {
 
 	}
 
+	@Deprecated
+	public MyFrameworkImplementation(String someValue, int otherValue) {
+	}
+
 	//some functions
 	public void fun(){
 		System.out.println("fun was called");

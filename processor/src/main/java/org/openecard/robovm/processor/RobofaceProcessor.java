@@ -375,6 +375,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
+					ex.printStackTrace();
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
 				}
 			}

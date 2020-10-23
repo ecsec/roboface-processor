@@ -38,12 +38,18 @@ public class ClassDescriptor implements TypeDescriptor, DeclarationDescriptor {
 	private final List<LookupDeclarationDescriptor> extensions;
 	private final List<MethodDescriptor> methods;
 	private final ClassType type;
+	private final boolean deprecated;
 
-	public ClassDescriptor(String ifaceName, List<LookupDeclarationDescriptor> implementing, ClassType type) {
+	public ClassDescriptor(
+			String ifaceName,
+			List<LookupDeclarationDescriptor> implementing,
+			ClassType type,
+			boolean deprecated) {
 		this.objcName = ifaceName;
 		this.methods = new ArrayList<>();
 		this.extensions = implementing;
 		this.type = type;
+		this.deprecated = deprecated;
 	}
 
 	@Override
@@ -53,6 +59,10 @@ public class ClassDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	public ClassType getClassType() {
 		return this.type;
+	}
+
+	public boolean isDeprecated() {
+		return this.deprecated;
 	}
 
 	public void addMethod(MethodDescriptor method) {
