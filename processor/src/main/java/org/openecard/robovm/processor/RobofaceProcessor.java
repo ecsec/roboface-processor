@@ -95,7 +95,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private JavacProcessingEnvironment jcProcEnv;
 
 	private boolean firstPass;
-	private List<ObjectDefinition> objDefs;
+	private List<FactoryDefinition> factoryDefs;
 	private TypeRegistry registry;
 
 	Symbol.ClassSymbol methodAttributeSym;
@@ -110,7 +110,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		super.init(processingEnv);
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
-		objDefs = new ArrayList<>();
+		factoryDefs = new ArrayList<>();
 		registry = new TypeRegistry(getInheritanceBlacklist(jcProcEnv));
 
 		methodAttributeSym = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
@@ -245,16 +245,16 @@ public class RobofaceProcessor extends AbstractProcessor {
 						final ClassDescriptor interfaceDesc = registry.createClassDescriptor(ccd,
 								ClassDescriptor.ClassType.Interface);
 
-						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, interfaceDesc);
-
-						objDefs.add(objDef);
-
 						// add NSObject type to tree
 						if (ccd.extending == null || ccd.extending.type.equals(javaObjectSymbol.asType())) {
 							ccd.extending = nsObjectExpression;
 						}
 
 						processMethods(ccd, interfaceDesc, methodDeclarations);
+
+
+						final FactoryDefinition factoryDef = new FactoryDefinition(className, factoryName, interfaceDesc);
+						factoryDefs.add(factoryDef);
 					}
 				}
 
@@ -371,7 +371,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
-					HeaderGenerator h = new HeaderGenerator(objDefs, includeHeaders, registry, types);
+					HeaderGenerator h = new HeaderGenerator(factoryDefs, includeHeaders, registry, types);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {

@@ -27,13 +27,13 @@ package org.openecard.robovm.processor;
  *
  * @author Tobias Wich
  */
-public class ObjectDefinition {
+public class FactoryDefinition {
 
 	private final String javaName;
 	private final String factoryName;
 	private final ClassDescriptor classDescriptor;
 
-	public ObjectDefinition(String javaName, String factoryName, ClassDescriptor classDescriptor) {
+	public FactoryDefinition(String javaName, String factoryName, ClassDescriptor classDescriptor) {
 		this.javaName = javaName;
 		this.factoryName = factoryName;
 		this.classDescriptor = classDescriptor;

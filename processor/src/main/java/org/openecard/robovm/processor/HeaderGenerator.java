@@ -37,17 +37,17 @@ import java.util.Map;
  */
 public class HeaderGenerator {
 
-	private final List<ObjectDefinition> objects;
+	private final List<FactoryDefinition> factoryDefs;
 	private final List<IncludeHeaderDefinition> includes;
 	private final TypeRegistry registry;
 	private final Types types;
 
 	public HeaderGenerator(
-			List<ObjectDefinition> objects,
+			List<FactoryDefinition> factoryDefs,
 			List<IncludeHeaderDefinition> includes,
 			TypeRegistry registry,
 			Types types) {
-		this.objects = objects;
+		this.factoryDefs = factoryDefs;
 		this.includes = includes;
 		this.registry = registry;
 		this.types = types;
@@ -78,7 +78,7 @@ public class HeaderGenerator {
 
 			w.println();
 
-			for (ObjectDefinition o : objects) {
+			for (FactoryDefinition o : factoryDefs) {
 				writeInitiatorFunction(w, o);
 			}
 		}
@@ -182,7 +182,7 @@ public class HeaderGenerator {
 		w.println(";");
 	}
 
-	private void writeInitiatorFunction(PrintWriter w, ObjectDefinition o) {
+	private void writeInitiatorFunction(PrintWriter w, FactoryDefinition o) {
 		String factoryMethod = o.getFactoryMethodName();
 		ClassDescriptor classDescriptor = o.getClassDescriptor();
 		if (factoryMethod == null) {
