@@ -22,8 +22,6 @@
 
 package org.openecard.robovm.processor;
 
-import java.util.List;
-
 
 /**
  *
@@ -33,28 +31,20 @@ public class ObjectDefinition {
 
 	private final String javaName;
 	private final String factoryName;
-	private final ProtocolDescriptor protocol;
+	private final ClassDescriptor classDescriptor;
 
-	public ObjectDefinition(String javaName, String factoryName, ProtocolDescriptor protocol) {
+	public ObjectDefinition(String javaName, String factoryName, ClassDescriptor classDescriptor) {
 		this.javaName = javaName;
 		this.factoryName = factoryName;
-		this.protocol = protocol;
+		this.classDescriptor = classDescriptor;
 	}
 
 	public String getFactoryMethodName() {
 		return factoryName;
 	}
 
-	public <T extends DeclarationDescriptor> String getProtocolName(List<T> protocols) {
-		for (DeclarationDescriptor iface : this.protocol.getExtensions()) {
-			for (DeclarationDescriptor pd : protocols) {
-				if (iface.getObjcName().equals(pd.getObjcName())) {
-					return iface.getObjcName();
-				}
-			}
-		}
-
-		throw new RuntimeException("Missing ObjcProtocol on NSObject instance.");
+	public ClassDescriptor getClassDescriptor() {
+		return this.classDescriptor;
 	}
 
 	public String getJavaName() {

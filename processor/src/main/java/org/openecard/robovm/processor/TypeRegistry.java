@@ -13,7 +13,6 @@ import com.sun.source.tree.Tree;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -31,7 +30,7 @@ public class TypeRegistry {
 	Map<Type, DeclarationDescriptor> declarationLookup = new HashMap<>();
 
 	List<EnumDescriptor> enums = new LinkedList<>();
-	Map<Type, ProtocolDescriptor> protocols = new HashMap<>();
+	Map<Type, ClassDescriptor> protocols = new HashMap<>();
 
 	private final Set<String> inheritanceBlacklist;
 
@@ -43,8 +42,8 @@ public class TypeRegistry {
 		return Collections.unmodifiableList(enums);
 	}
 
-	public List<ProtocolDescriptor> getProtocols() {
-		return Collections.unmodifiableList(new ArrayList<>(protocols.values()));
+	public boolean hasClasses() {
+		return !this.protocols.isEmpty();
 	}
 
 	DeclarationDescriptor asDeclaration(Type type) {
@@ -52,7 +51,7 @@ public class TypeRegistry {
 			return declarationLookup.get(type);
 		}
 
-		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
+		ClassDescriptor descriptor = addFakeProtocolDescriptor(type);
 		return descriptor;
 	}
 
@@ -95,16 +94,16 @@ public class TypeRegistry {
 			return desc;
 		}
 
-		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
+		ClassDescriptor descriptor = addFakeProtocolDescriptor(type);
 		return descriptor;
 	}
 
-	private ProtocolDescriptor addFakeProtocolDescriptor(Type type) {
+	private ClassDescriptor addFakeProtocolDescriptor(Type type) {
 		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(
+		ClassDescriptor descriptor = new ClassDescriptor(
 				type.tsym.getSimpleName().toString(),
 				new LinkedList<>(),
-				ProtocolDescriptor.IosType.Protocol);
+				ClassDescriptor.ClassType.Protocol);
 		this.typeLookup.put(type, descriptor);
 		this.declarationLookup.put(type, descriptor);
 		return descriptor;
@@ -133,11 +132,11 @@ public class TypeRegistry {
 		return result;
 	}
 
-	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd, ProtocolDescriptor.IosType type) {
+	public ClassDescriptor createClassDescriptor(JCTree.JCClassDecl ccd, ClassDescriptor.ClassType type) {
 		final String simpleName = ccd.getSimpleName().toString();
 		List<LookupDeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
 
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes, type);
+		ClassDescriptor descriptor = new ClassDescriptor(simpleName, inheritanceTypes, type);
 		typeLookup.put(ccd.sym.type, descriptor);
 		protocols.put(ccd.sym.type, descriptor);
 		return descriptor;
@@ -163,16 +162,12 @@ public class TypeRegistry {
 	public MethodDescriptor createMethod(JCTree.JCMethodDecl tree) {
 
 		Symbol.MethodSymbol methodSymbol = tree.sym;
-		boolean hasOverrideAnnotation = false;
-
-		for (JCTree.JCAnnotation annotation : tree.getModifiers().getAnnotations()) {
-			if ("java.lang.Override".equals(annotation.attribute.type.tsym.toString())) {
-				hasOverrideAnnotation = true;
-			}
-		}
 
 		switch (methodSymbol.getKind()) {
 			case CONSTRUCTOR: {
+				if (methodSymbol.isStatic()) {
+					return null;
+				}
 				return this.createConstructorDescriptor(
 						methodSymbol);
 			}
@@ -180,8 +175,7 @@ public class TypeRegistry {
 				return this.createMethodDescriptor(
 						tree.name.toString(),
 						tree.getReturnType().type,
-						methodSymbol,
-						hasOverrideAnnotation);
+						methodSymbol);
 			}
 			default:
 				return null;
@@ -191,13 +185,11 @@ public class TypeRegistry {
 	private MethodDescriptor createMethodDescriptor(
 			String name,
 			Type returntype,
-			Symbol.MethodSymbol methodSymbol,
-			boolean hasOverrideAnnotation) {
+			Symbol.MethodSymbol methodSymbol) {
 		MethodDescriptor descriptor = new MethodDescriptor(
 				name,
 				getReturnType(returntype),
-				methodSymbol,
-				hasOverrideAnnotation
+				methodSymbol
 		);
 
 		return descriptor;
@@ -207,7 +199,7 @@ public class TypeRegistry {
 		MethodDescriptor descriptor = new MethodDescriptor(
 				"init",
 				new KeywordDescriptor("id"),
-				methodSymbol, false);
+				methodSymbol);
 
 		return descriptor;
 	}

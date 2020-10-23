@@ -32,14 +32,14 @@ import java.util.List;
  * @author Tobias Wich
  * @author Neil Crossley
  */
-public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor {
+public class ClassDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String objcName;
 	private final List<LookupDeclarationDescriptor> extensions;
 	private final List<MethodDescriptor> methods;
-	private final IosType type;
+	private final ClassType type;
 
-	public ProtocolDescriptor(String ifaceName, List<LookupDeclarationDescriptor> implementing, IosType type) {
+	public ClassDescriptor(String ifaceName, List<LookupDeclarationDescriptor> implementing, ClassType type) {
 		this.objcName = ifaceName;
 		this.methods = new ArrayList<>();
 		this.extensions = implementing;
@@ -51,7 +51,7 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		return objcName;
 	}
 
-	public IosType getType() {
+	public ClassType getClassType() {
 		return this.type;
 	}
 
@@ -75,7 +75,7 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 
 	@Override
 	public String getIosType() {
-		return String.format("NSObject<%s> *", this.objcName);
+		return this.getClassType().asReference(this);
 	}
 
 	@Override
@@ -83,8 +83,18 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		return null;
 	}
 
-	public static enum IosType {
-		Interface,
-		Protocol;
+	public static enum ClassType {
+		Interface("%s *"),
+		Protocol("NSObject<%s> *");
+
+		private final String iosTypeFormat;
+
+		ClassType(String iosTypeFormat){
+			this.iosTypeFormat = iosTypeFormat;
+		}
+
+		public String asReference(DeclarationDescriptor descriptor) {
+			return String.format(iosTypeFormat, descriptor.getObjcName());
+		}
 	}
 }

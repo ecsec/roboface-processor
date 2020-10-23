@@ -191,8 +191,8 @@ public class RobofaceProcessor extends AbstractProcessor {
 						knownRobofaceInterfaces.add((Type.ClassType)ccd.sym.type);
 
 						// record type information for header generation
-						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd,
-								ProtocolDescriptor.IosType.Protocol);
+						final ClassDescriptor protoDesc = registry.createClassDescriptor(ccd,
+								ClassDescriptor.ClassType.Protocol);
 
 						// add ObjCProtocol type to tree
 						ccd.implementing = ccd.implementing.append(nsObjectProtocolExp);
@@ -242,23 +242,10 @@ public class RobofaceProcessor extends AbstractProcessor {
 						}
 
 						// record type information for header generation
-						ArrayList<String> ifaces = new ArrayList<>();
-						for (JCTree.JCExpression exp : ccd.getImplementsClause()) {
-							//System.out.println("finding ifaces: " + exp.getClass());
-							if (exp instanceof JCTree.JCFieldAccess) {
-								JCTree.JCFieldAccess exp1 = (JCTree.JCFieldAccess) exp;
-								ifaces.add(exp1.getIdentifier().toString());
-							} else {
-								ifaces.add(exp.toString());
-							}
-						}
+						final ClassDescriptor interfaceDesc = registry.createClassDescriptor(ccd,
+								ClassDescriptor.ClassType.Interface);
 
-
-						// record type information for header generation
-						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd,
-								ProtocolDescriptor.IosType.Interface);
-
-						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, protoDesc);
+						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, interfaceDesc);
 
 						objDefs.add(objDef);
 
@@ -267,7 +254,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 							ccd.extending = nsObjectExpression;
 						}
 
-						processMethods(ccd, protoDesc, methodDeclarations);
+						processMethods(ccd, interfaceDesc, methodDeclarations);
 					}
 				}
 
@@ -379,7 +366,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 			insertMarshallers(methodDeclarations, tm);
 
-			if (!registry.getProtocols().isEmpty()) {
+			if (registry.hasClasses()) {
 				try {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
@@ -402,7 +389,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 	private void processMethods(
 			final JCTree.JCClassDecl ccd,
-			final ProtocolDescriptor protoDesc,
+			final ClassDescriptor protoDesc,
 			List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations) {
 
 		// find methods in this interface and add @Method annotation
@@ -425,8 +412,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 				JCTree.JCModifiers modifiers = tree.getModifiers();
 				Set<Modifier> flags = modifiers.getFlags();
 				if (flags.contains(Modifier.PRIVATE)
-						|| flags.contains(Modifier.PROTECTED)
-						|| flags.contains(Modifier.STATIC)) {
+						|| flags.contains(Modifier.PROTECTED)) {
 					System.out.printf(" - Skipping method %s because it has the wrong flags: %s\n", tree.name, tree.mods.getFlags());
 					return;
 				}

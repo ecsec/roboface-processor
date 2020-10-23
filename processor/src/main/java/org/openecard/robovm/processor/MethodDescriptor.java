@@ -39,18 +39,15 @@ public class MethodDescriptor {
 	private final TypeDescriptor returnType;
 	private final Symbol.MethodSymbol methodSymbol;
 	private final List<MethodParameterDescriptor> params;
-	private final boolean hasOverrideAnnotation;
 
 	public MethodDescriptor(
 			String name,
 			TypeDescriptor returnType,
-			Symbol.MethodSymbol methodSymbol,
-			boolean hasOverrideAnnotation
+			Symbol.MethodSymbol methodSymbol
 	) {
 		this.name = name;
 		this.returnType = returnType;
 		this.methodSymbol = methodSymbol;
-		this.hasOverrideAnnotation = hasOverrideAnnotation;
 		this.params = new ArrayList<>();
 	}
 
@@ -66,6 +63,10 @@ public class MethodDescriptor {
 		return Collections.unmodifiableList(params);
 	}
 
+	public boolean isStatic() {
+		return this.methodSymbol.isStatic();
+	}
+
 	public TypeDescriptor getReturnType() {
 		return returnType;
 	}
@@ -76,10 +77,6 @@ public class MethodDescriptor {
 
 	public boolean isDeprecated() {
 		return methodSymbol.isDeprecated();
-	}
-
-	public boolean hasOverrideAnnotation() {
-		return hasOverrideAnnotation;
 	}
 
 	public void printSignature(PrintWriter w) {
