@@ -29,7 +29,7 @@
 									<goal>unpack-dependencies</goal>
 								</goals>
 								<configuration>
-									<includeArtifactIds>roboface-pre-process-example</includeArtifactIds>
+									<includeArtifactIds>roboface-preprocess-example</includeArtifactIds>
 									<outputDirectory>${basedir}/target/classes/</outputDirectory>
 									<includes>/roboheaders/*</includes>
 								</configuration>
