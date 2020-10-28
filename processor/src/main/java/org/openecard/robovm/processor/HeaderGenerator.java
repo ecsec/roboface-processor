@@ -201,8 +201,10 @@ public class HeaderGenerator {
 		if (factoryMethod == null) {
 			return;
 		}
-		w.printf("static %s %s() __attribute__((deprecated)) {%n", classDescriptor.getIosType(), factoryMethod);
-		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", factoryMethod);
+		String iosType = classDescriptor.getIosType();
+		w.printf("static %s %s() __attribute__((deprecated(\"This factory method is obsolete. Use init method(s) instead.\"))) {%n",
+				iosType, factoryMethod);
+		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", iosType);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
 		w.println();
