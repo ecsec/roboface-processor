@@ -212,6 +212,9 @@ public class RobofaceProcessor extends AbstractProcessor {
 		JCTree.JCExpression nsObjectExpression = tm.Type(nsObjectSymbol.asType());
 		Symbol.ClassSymbol javaObjectSymbol = jcProcEnv.getElementUtils().getTypeElement("java.lang.Object");
 
+		Symbol.ClassSymbol customClassSymbol = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.CustomClass");
+		JCTree.JCExpression customClassSymbolExp = tm.Type(customClassSymbol.asType());
+
 		objScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
 			@Override
@@ -252,9 +255,16 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 						processMethods(ccd, interfaceDesc, methodDeclarations);
 
-
 						final FactoryDefinition factoryDef = new FactoryDefinition(className, factoryName, interfaceDesc);
 						factoryDefs.add(factoryDef);
+
+						JCTree.JCAnnotation customClassAnnotation = tm.Annotation(customClassSymbolExp,
+								com.sun.tools.javac.util.List.of(
+										tm.Assign(
+												tm.Ident(names.fromString("value")),
+												tm.Literal(ccd.getSimpleName().toString()))));
+
+						ccd.mods.annotations = ccd.mods.annotations.append(customClassAnnotation);
 
 						if (factoryName != null)
 						{
