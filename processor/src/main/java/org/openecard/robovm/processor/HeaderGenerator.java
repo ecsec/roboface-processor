@@ -204,7 +204,7 @@ public class HeaderGenerator {
 		String iosType = classDescriptor.getIosType();
 		w.printf("static %s %s() __attribute__((deprecated(\"This factory method is obsolete. Use init method(s) instead.\"))) {%n",
 				iosType, factoryMethod);
-		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", iosType);
+		w.printf("\textern %s rvmInstantiateFramework(const char *className);%n", iosType);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
 		w.println();
