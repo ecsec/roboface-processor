@@ -99,10 +99,18 @@ public class HeaderGenerator {
 	}
 
 	private void writeForwardDecl(PrintWriter w, ClassDescriptor p) {
+		String iosType;
+		switch(p.getClassType()) {
+			case Protocol:
+				iosType = "protocol";
+				break;
+			case Interface:
+				// XCode complains that the specification is invalid with forward declarations of interfaces.
+				return;
+			default:
+				throw new IllegalArgumentException("Unknown type: " + p.getClassType());
+		}
 		String objcName = p.getObjcName();
-		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		String iosType = p.getClassType() == ClassDescriptor.ClassType.Interface ?
-				"interface" : "protocol";
 
 		w.printf("@%s %s;%n", iosType, objcName);
 	}
