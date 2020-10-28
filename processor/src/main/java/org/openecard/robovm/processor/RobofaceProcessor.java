@@ -58,6 +58,8 @@ import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
@@ -93,16 +95,31 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private JavacProcessingEnvironment jcProcEnv;
 
 	private boolean firstPass;
-	private List<ObjectDefinition> objDefs;
+	private List<FactoryDefinition> factoryDefs;
 	private TypeRegistry registry;
+
+	Symbol.ClassSymbol methodAttributeSym;
+	Symbol.ClassSymbol stringClazz;
+	Symbol.MethodSymbol methodSymbol;
+	Trees trees;
+	Names names;
+	TreeMaker tm;
 
 	@Override
 	public synchronized void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
-		objDefs = new ArrayList<>();
+		factoryDefs = new ArrayList<>();
 		registry = new TypeRegistry(getInheritanceBlacklist(jcProcEnv));
+
+		methodAttributeSym = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
+		stringClazz = jcProcEnv.getElementUtils().getTypeElement("java.lang.String");
+
+		trees = Trees.instance(processingEnv);
+		names = Names.instance(jcProcEnv.getContext());
+		methodSymbol = new Symbol.MethodSymbol(PARAMETER, names.fromString("selector"), stringClazz.type, methodAttributeSym.owner);
+		tm = TreeMaker.instance(jcProcEnv.getContext());
 	}
 
 	@Override
@@ -117,9 +134,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 		Set<Type.ClassType> knownRobofaceInterfaces = new HashSet<>();
 
-		final Trees trees = Trees.instance(processingEnv);
 		final TreePathScanner<Object, CompilationUnitTree> enumScanner, ifaceScanner, objScanner, implScanner;
-		final Names names = Names.instance(jcProcEnv.getContext());
 
 		enumScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -153,7 +168,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 			}
 		};
 
-		TreeMaker tm = TreeMaker.instance(jcProcEnv.getContext());
+
 		List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations = new LinkedList<>();
 
 		// create ObjCProtocol type
@@ -161,10 +176,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 		JCTree.JCExpression nsObjectProtocolExp = tm.Type(nsObjectProtocolSymbol.asType());
 
 		ifaceScanner = new TreePathScanner<Object, CompilationUnitTree>() {
-
-			Symbol.ClassSymbol methodAttributeSym = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
-			Symbol.ClassSymbol stringClazz = jcProcEnv.getElementUtils().getTypeElement("java.lang.String");
-			Symbol.MethodSymbol methodSymbol = new Symbol.MethodSymbol(PARAMETER, names.fromString("selector"), stringClazz.type, methodAttributeSym.owner);
 
 			@Override
 			public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
@@ -180,63 +191,29 @@ public class RobofaceProcessor extends AbstractProcessor {
 						knownRobofaceInterfaces.add((Type.ClassType)ccd.sym.type);
 
 						// record type information for header generation
-						final ProtocolDescriptor protoDesc = registry.createProtocolDescriptor(ccd);
+						final ClassDescriptor protoDesc = registry.createClassDescriptor(ccd,
+								ClassDescriptor.ClassType.Protocol);
 
 						// add ObjCProtocol type to tree
 						ccd.implementing = ccd.implementing.append(nsObjectProtocolExp);
 
-						// find methods in this interface and add @Method annotation
-						ccd.accept(new TreeTranslator() {
-							@Override
-							public <T extends JCTree> T translate(T tree) {
-								if (tree != null && (tree.getKind() == Tree.Kind.METHOD)) {
-									return super.translate(tree);
-								} else {
-									return tree;
-								}
-							}
-
-							@Override
-							public void visitMethodDef(JCTree.JCMethodDecl tree) {
-								super.visitMethodDef(tree);
-
-								// capture method definitions
-								final MethodDescriptor methodDescriptor = registry.createMethodDescriptor(
-										tree.name.toString(),
-										tree.getReturnType().type);
-								protoDesc.addMethod(methodDescriptor);
-								methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodDescriptor.getReturnType(), tree.getModifiers()));
-
-								for (JCTree.JCVariableDecl paramDecl : tree.params) {
-									Type parameterType = paramDecl.getType().type;
-
-									final MethodParameterDescriptor methodParamDescr = registry.createMethodParameterDescriptor(
-											paramDecl.name.toString(),
-											parameterType);
-									methodDescriptor.addParam(methodParamDescr);
-
-									methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodParamDescr.getType(), paramDecl.getModifiers()));
-								}
-
-								// create @Method type
-								Pair<Symbol.MethodSymbol,Attribute> ds = new Pair<>(methodSymbol, new Attribute.Constant(stringClazz.type, methodDescriptor.asSelector()));
-								JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(methodAttributeSym.asType(), com.sun.tools.javac.util.List.of(ds)));
-								tree.mods.annotations = tree.mods.annotations.append(at);
-
-								System.out.printf("Adding @Method annotation %s to method %s\n", at, tree.name);
-							}
-						});
+						processMethods(ccd, protoDesc, methodDeclarations);
 
 					}
 				}
 
 				return trees;
 			}
+
 		};
 
 		// create ObjCProtocol type
 		Symbol.ClassSymbol nsObjectSymbol = jcProcEnv.getElementUtils().getTypeElement("org.robovm.apple.foundation.NSObject");
 		JCTree.JCExpression nsObjectExpression = tm.Type(nsObjectSymbol.asType());
+		Symbol.ClassSymbol javaObjectSymbol = jcProcEnv.getElementUtils().getTypeElement("java.lang.Object");
+
+		Symbol.ClassSymbol customClassSymbol = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.CustomClass");
+		JCTree.JCExpression customClassSymbolExp = tm.Type(customClassSymbol.asType());
 
 		objScanner = new TreePathScanner<Object, CompilationUnitTree>() {
 
@@ -248,7 +225,9 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 					// Only process on files which have been compiled from source
 					if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE) {
-						System.out.println("Processing class " + classTree.getSimpleName());
+						final Name simpleName = classTree.getSimpleName();
+						System.out.println("Processing class " + simpleName);
+
 						String className = ccd.sym.fullname.toString();
 
 						// TODO: find out how to properly access the annotation on the tree
@@ -266,24 +245,30 @@ public class RobofaceProcessor extends AbstractProcessor {
 						}
 
 						// record type information for header generation
-						ArrayList<String> ifaces = new ArrayList<>();
-						for (JCTree.JCExpression exp : ccd.getImplementsClause()) {
-							//System.out.println("finding ifaces: " + exp.getClass());
-							if (exp instanceof JCTree.JCFieldAccess) {
-								JCTree.JCFieldAccess exp1 = (JCTree.JCFieldAccess) exp;
-								ifaces.add(exp1.getIdentifier().toString());
-							} else {
-								ifaces.add(exp.toString());
-							}
-						}
-						final ObjectDefinition objDef = new ObjectDefinition(className, factoryName, ifaces);
-						objDefs.add(objDef);
+						final ClassDescriptor interfaceDesc = registry.createClassDescriptor(ccd,
+								ClassDescriptor.ClassType.Interface);
 
 						// add NSObject type to tree
-						ccd.extending = nsObjectExpression;
+						if (ccd.extending == null || ccd.extending.type.equals(javaObjectSymbol.asType())) {
+							ccd.extending = nsObjectExpression;
+						}
 
-						// add instance method
+						processMethods(ccd, interfaceDesc, methodDeclarations);
+
+						final FactoryDefinition factoryDef = new FactoryDefinition(className, factoryName, interfaceDesc);
+						factoryDefs.add(factoryDef);
+
+						JCTree.JCAnnotation customClassAnnotation = tm.Annotation(customClassSymbolExp,
+								com.sun.tools.javac.util.List.of(
+										tm.Assign(
+												tm.Ident(names.fromString("value")),
+												tm.Literal(ccd.getSimpleName().toString()))));
+
+						ccd.mods.annotations = ccd.mods.annotations.append(customClassAnnotation);
+
+						if (factoryName != null)
 						{
+							// add instance method
 
 							// define return type
 							JCTree.JCExpression returnType = tm.Type(nsObjectSymbol.type);
@@ -310,7 +295,6 @@ public class RobofaceProcessor extends AbstractProcessor {
 		};
 
 		Types types = Types.instance(jcProcEnv.getContext());
-
 
 		Predicate<Type.ClassType> mustExtendNSObject = someType -> {
 			for (Type.ClassType knownRobofaceProtocolInterfaces : knownRobofaceInterfaces) {
@@ -414,15 +398,16 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 			insertMarshallers(methodDeclarations, tm);
 
-			if (!registry.getProtocols().isEmpty()) {
+			if (registry.hasClasses()) {
 				try {
 					String headerPath = processingEnv.getOptions().getOrDefault(HEADER_PATH, HEADER_PATH_DEFAULT);
 					String headerName = processingEnv.getOptions().getOrDefault(HEADER_NAME, HEADER_NAME_DEFAULT);
 					List<IncludeHeaderDefinition> includeHeaders = this.getIncludeHeaders();
-					HeaderGenerator h = new HeaderGenerator(objDefs, includeHeaders, registry);
+					HeaderGenerator h = new HeaderGenerator(factoryDefs, includeHeaders, registry, types);
 					FileObject f = processingEnv.getFiler().createResource(StandardLocation.CLASS_OUTPUT, headerPath, headerName);
 					h.writeHeader(f.openWriter());
 				} catch (IOException ex) {
+					ex.printStackTrace();
 					processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, "Error writing native header: " + ex.getMessage());
 				}
 			}
@@ -433,6 +418,74 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 		// claim annotation and prevent further processing
 		return true;
+	}
+
+	private void processMethods(
+			final JCTree.JCClassDecl ccd,
+			final ClassDescriptor protoDesc,
+			List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations) {
+
+		// find methods in this interface and add @Method annotation
+		ccd.accept(new TreeTranslator() {
+			@Override
+			public <T extends JCTree> T translate(T tree) {
+				if (tree != null && (tree.getKind() == Tree.Kind.METHOD)) {
+					return super.translate(tree);
+				} else {
+					return tree;
+				}
+			}
+
+			@Override
+			public void visitMethodDef(JCTree.JCMethodDecl tree) {
+				super.visitMethodDef(tree);
+				if (!(tree.sym instanceof Symbol.MethodSymbol)) {
+					return;
+				}
+				JCTree.JCModifiers modifiers = tree.getModifiers();
+				Set<Modifier> flags = modifiers.getFlags();
+				if (flags.contains(Modifier.PRIVATE)
+						|| flags.contains(Modifier.PROTECTED)
+						|| flags.contains(Modifier.STATIC)) {
+					System.out.printf(" - Skipping method %s because it has the wrong flags: %s\n", tree.name, tree.mods.getFlags());
+					return;
+				}
+
+				MethodDescriptor methodDescriptor = registry.createMethod(tree);
+
+				if (methodDescriptor == null) {
+					return;
+				}
+				// capture method definitions
+
+				protoDesc.addMethod(methodDescriptor);
+				methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodDescriptor.getReturnType(), tree.getModifiers()));
+
+				for (JCTree.JCVariableDecl paramDecl : tree.params) {
+					Type parameterType = paramDecl.getType().type;
+
+					final MethodParameterDescriptor methodParamDescr = registry.createMethodParameterDescriptor(
+							paramDecl.name.toString(),
+							parameterType);
+					methodDescriptor.addParam(methodParamDescr);
+
+					methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodParamDescr.getType(), paramDecl.getModifiers()));
+				}
+
+				JCTree.JCAnnotation at = annotateWithMethodSelector(methodDescriptor, tree);
+
+				System.out.printf("Adding @Method annotation %s to method %s\n", at, tree.name);
+			}
+
+		});
+	}
+
+	private JCTree.JCAnnotation annotateWithMethodSelector(final MethodDescriptor methodDescriptor, JCTree.JCMethodDecl tree) {
+		// create @Method type
+		Pair<Symbol.MethodSymbol, Attribute> ds = new Pair<>(methodSymbol, new Attribute.Constant(stringClazz.type, methodDescriptor.asSelector()));
+		JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(methodAttributeSym.asType(), com.sun.tools.javac.util.List.of(ds)));
+		tree.mods.annotations = tree.mods.annotations.append(at);
+		return at;
 	}
 
 	private void insertMarshallers(List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations, TreeMaker tm) {
@@ -480,7 +533,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 	private static Set<String> getInheritanceBlacklist(JavacProcessingEnvironment processingEnv) {
 
 		String rawInheritanceBlacklist = processingEnv.getOptions().getOrDefault(INHERITANCE_BLACKLIST, "");
-		
+
 		Set<String> result = new HashSet<>();
 		for (String rawClassPath : rawInheritanceBlacklist.split(";")) {
 			String trimmedClassPath = rawClassPath.trim();

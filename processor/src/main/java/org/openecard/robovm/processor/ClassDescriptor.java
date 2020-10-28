@@ -32,21 +32,37 @@ import java.util.List;
  * @author Tobias Wich
  * @author Neil Crossley
  */
-public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor {
+public class ClassDescriptor implements TypeDescriptor, DeclarationDescriptor {
 
 	private final String objcName;
-	private final List<DeclarationDescriptor> extensions;
+	private final List<LookupDeclarationDescriptor> extensions;
 	private final List<MethodDescriptor> methods;
+	private final ClassType type;
+	private final boolean deprecated;
 
-	public ProtocolDescriptor(String ifaceName, List<DeclarationDescriptor> implementing) {
+	public ClassDescriptor(
+			String ifaceName,
+			List<LookupDeclarationDescriptor> implementing,
+			ClassType type,
+			boolean deprecated) {
 		this.objcName = ifaceName;
 		this.methods = new ArrayList<>();
 		this.extensions = implementing;
+		this.type = type;
+		this.deprecated = deprecated;
 	}
 
 	@Override
 	public String getObjcName() {
 		return objcName;
+	}
+
+	public ClassType getClassType() {
+		return this.type;
+	}
+
+	public boolean isDeprecated() {
+		return this.deprecated;
 	}
 
 	public void addMethod(MethodDescriptor method) {
@@ -57,7 +73,7 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 		return Collections.unmodifiableList(methods);
 	}
 
-	public List<DeclarationDescriptor> getExtensions() {
+	public List<LookupDeclarationDescriptor> getExtensions() {
 		return Collections.unmodifiableList(extensions);
 	}
 
@@ -69,11 +85,26 @@ public class ProtocolDescriptor implements TypeDescriptor, DeclarationDescriptor
 
 	@Override
 	public String getIosType() {
-		return String.format("NSObject<%s> *", this.objcName);
+		return this.getClassType().asReference(this);
 	}
 
 	@Override
 	public String marshaller() {
 		return null;
+	}
+
+	public static enum ClassType {
+		Interface("%s *"),
+		Protocol("NSObject<%s> *");
+
+		private final String iosTypeFormat;
+
+		ClassType(String iosTypeFormat){
+			this.iosTypeFormat = iosTypeFormat;
+		}
+
+		public String asReference(DeclarationDescriptor descriptor) {
+			return String.format(iosTypeFormat, descriptor.getObjcName());
+		}
 	}
 }

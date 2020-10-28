@@ -10,6 +10,7 @@
 package org.openecard.robovm.processor;
 
 import com.sun.source.tree.Tree;
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.tree.JCTree;
 import java.util.Collections;
@@ -29,7 +30,7 @@ public class TypeRegistry {
 	Map<Type, DeclarationDescriptor> declarationLookup = new HashMap<>();
 
 	List<EnumDescriptor> enums = new LinkedList<>();
-	List<ProtocolDescriptor> protocols = new LinkedList<>();
+	Map<Type, ClassDescriptor> protocols = new HashMap<>();
 
 	private final Set<String> inheritanceBlacklist;
 
@@ -41,8 +42,8 @@ public class TypeRegistry {
 		return Collections.unmodifiableList(enums);
 	}
 
-	public List<ProtocolDescriptor> getProtocols() {
-		return Collections.unmodifiableList(protocols);
+	public boolean hasClasses() {
+		return !this.protocols.isEmpty();
 	}
 
 	DeclarationDescriptor asDeclaration(Type type) {
@@ -50,7 +51,7 @@ public class TypeRegistry {
 			return declarationLookup.get(type);
 		}
 
-		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
+		ClassDescriptor descriptor = addFakeProtocolDescriptor(type);
 		return descriptor;
 	}
 
@@ -93,13 +94,17 @@ public class TypeRegistry {
 			return desc;
 		}
 
-		ProtocolDescriptor descriptor = addFakeProtocolDescriptor(type);
+		ClassDescriptor descriptor = addFakeProtocolDescriptor(type);
 		return descriptor;
 	}
 
-	private ProtocolDescriptor addFakeProtocolDescriptor(Type type) {
+	private ClassDescriptor addFakeProtocolDescriptor(Type type) {
 		System.out.printf("WARNING: Found an undeclared type %s. Will assume it is a valid, available Java protocol.\n", type);
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(type.tsym.getSimpleName().toString(), new LinkedList<>());
+		ClassDescriptor descriptor = new ClassDescriptor(
+				type.tsym.getSimpleName().toString(),
+				new LinkedList<>(),
+				ClassDescriptor.ClassType.Protocol,
+				false);
 		this.typeLookup.put(type, descriptor);
 		this.declarationLookup.put(type, descriptor);
 		return descriptor;
@@ -128,10 +133,23 @@ public class TypeRegistry {
 		return result;
 	}
 
-	public ProtocolDescriptor createProtocolDescriptor(JCTree.JCClassDecl ccd) {
+	public ClassDescriptor createClassDescriptor(JCTree.JCClassDecl ccd, ClassDescriptor.ClassType type) {
 		final String simpleName = ccd.getSimpleName().toString();
-		final List<DeclarationDescriptor> inheritanceTypes = new LinkedList<>();
+		List<LookupDeclarationDescriptor> inheritanceTypes = findInheritanceTypes(ccd, simpleName);
 
+		ClassDescriptor descriptor = new ClassDescriptor(
+				simpleName,
+				inheritanceTypes,
+				type,
+				ccd.sym.isDeprecated()
+		);
+		typeLookup.put(ccd.sym.type, descriptor);
+		protocols.put(ccd.sym.type, descriptor);
+		return descriptor;
+	}
+
+	private List<LookupDeclarationDescriptor> findInheritanceTypes(JCTree.JCClassDecl ccd, final String simpleName) {
+		final List<LookupDeclarationDescriptor> inheritanceTypes = new LinkedList<>();
 		ccd.implementing.forEach((nextIface) -> {
 			if (nextIface.getKind() == Tree.Kind.IDENTIFIER) {
 				String fullname = nextIface.type.asElement().enclClass().className();
@@ -142,19 +160,52 @@ public class TypeRegistry {
 				} else {
 					System.out.printf("Blacklisting inheritance %s from %s\n", simpleName, fullname);
 				}
-			};
-
+			}
 		});
+		return inheritanceTypes;
+	}
 
-		ProtocolDescriptor descriptor = new ProtocolDescriptor(simpleName, inheritanceTypes);
-		typeLookup.put(ccd.sym.type, descriptor);
-		protocols.add(descriptor);
+	public MethodDescriptor createMethod(JCTree.JCMethodDecl tree) {
+
+		Symbol.MethodSymbol methodSymbol = tree.sym;
+
+		switch (methodSymbol.getKind()) {
+			case CONSTRUCTOR: {
+				if (methodSymbol.isStatic()) {
+					return null;
+				}
+				return this.createConstructorDescriptor(
+						methodSymbol);
+			}
+			case METHOD: {
+				return this.createMethodDescriptor(
+						tree.name.toString(),
+						tree.getReturnType().type,
+						methodSymbol);
+			}
+			default:
+				return null;
+		}
+	}
+
+	private MethodDescriptor createMethodDescriptor(
+			String name,
+			Type returntype,
+			Symbol.MethodSymbol methodSymbol) {
+		MethodDescriptor descriptor = new MethodDescriptor(
+				name,
+				getReturnType(returntype),
+				methodSymbol
+		);
+
 		return descriptor;
 	}
 
-	public MethodDescriptor createMethodDescriptor(String name, Type type) {
-		MethodDescriptor descriptor = new MethodDescriptor(name,
-				getReturnType(type));
+	private MethodDescriptor createConstructorDescriptor(Symbol.MethodSymbol methodSymbol) {
+		MethodDescriptor descriptor = new MethodDescriptor(
+				"init",
+				new KeywordDescriptor("id"),
+				methodSymbol);
 
 		return descriptor;
 	}

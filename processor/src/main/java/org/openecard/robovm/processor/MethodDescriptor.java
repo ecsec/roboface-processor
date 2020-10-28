@@ -22,7 +22,7 @@
 
 package org.openecard.robovm.processor;
 
-import java.io.PrintWriter;
+import com.sun.tools.javac.code.Symbol;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,12 +36,22 @@ public class MethodDescriptor {
 
 	private final String name;
 	private final TypeDescriptor returnType;
+	private final Symbol.MethodSymbol methodSymbol;
 	private final List<MethodParameterDescriptor> params;
 
-	public MethodDescriptor(String name, TypeDescriptor returnType) {
+	public MethodDescriptor(
+			String name,
+			TypeDescriptor returnType,
+			Symbol.MethodSymbol methodSymbol
+	) {
 		this.name = name;
 		this.returnType = returnType;
+		this.methodSymbol = methodSymbol;
 		this.params = new ArrayList<>();
+	}
+
+	public Symbol.MethodSymbol getMethodSymbol() {
+		return methodSymbol;
 	}
 
 	public void addParam(MethodParameterDescriptor param) {
@@ -52,6 +62,10 @@ public class MethodDescriptor {
 		return Collections.unmodifiableList(params);
 	}
 
+	public boolean isStatic() {
+		return this.methodSymbol.isStatic();
+	}
+
 	public TypeDescriptor getReturnType() {
 		return returnType;
 	}
@@ -60,21 +74,8 @@ public class MethodDescriptor {
 		return name;
 	}
 
-	public void printSignature(PrintWriter w) {
-		w.printf("(%s) %s", this.getReturnType().getIosType(), this.getName());
-		boolean isFirstParameter = true;
-		for (MethodParameterDescriptor mp : this.params) {
-			final String effectiveParameterType = mp.getType().getIosType();
-			final String paramName = mp.getName();
-			if (isFirstParameter) {
-				w.printf(":(%s)%s", effectiveParameterType, paramName);
-				isFirstParameter = false;
-			} else {
-				char firstCharacter = Character.toUpperCase(paramName.charAt(0));
-				String remainingChar = paramName.substring(1);
-				w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
-			}
-		}
+	public boolean isDeprecated() {
+		return methodSymbol.isDeprecated();
 	}
 
 	public String asSelector() {

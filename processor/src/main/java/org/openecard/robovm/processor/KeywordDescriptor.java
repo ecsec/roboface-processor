@@ -1,5 +1,5 @@
 /** **************************************************************************
- * Copyright (C) 2019 ecsec GmbH.
+ * Copyright (C) 2020 ecsec GmbH.
  * All rights reserved.
  * Contact: ecsec GmbH (info@ecsec.de)
  *
@@ -7,20 +7,28 @@
  * contained in a signed written agreement between you and ecsec GmbH.
  *
  ************************************************************************** */
-package roboface.test;
-
-import org.openecard.robovm.annotations.FrameworkInterface;
+package org.openecard.robovm.processor;
 
 /**
  *
  * @author Neil Crossley
  */
-@FrameworkInterface
-public interface SomeSimpleInterface {
+public class KeywordDescriptor implements TypeDescriptor {
 
-	boolean hasMethod();
+	private final String keyword;
 
-	@Deprecated
-	void myDeprecatedMethod();
+	public KeywordDescriptor(String keyword) {
+		this.keyword = keyword;
+	}
+
+	@Override
+	public String getIosType() {
+		return keyword;
+	}
+
+	@Override
+	public String marshaller() {
+		return null;
+	}
 
 }

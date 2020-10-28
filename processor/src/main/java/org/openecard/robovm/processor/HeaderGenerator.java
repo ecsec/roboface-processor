@@ -22,10 +22,13 @@
 
 package org.openecard.robovm.processor;
 
+import com.sun.tools.javac.code.Type;
+import com.sun.tools.javac.code.Types;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -34,14 +37,20 @@ import java.util.List;
  */
 public class HeaderGenerator {
 
-	private final List<ObjectDefinition> objects;
+	private final List<FactoryDefinition> factoryDefs;
 	private final List<IncludeHeaderDefinition> includes;
 	private final TypeRegistry registry;
+	private final Types types;
 
-	public HeaderGenerator(List<ObjectDefinition> objects, List<IncludeHeaderDefinition> includes, TypeRegistry registry) {
-		this.objects = objects;
+	public HeaderGenerator(
+			List<FactoryDefinition> factoryDefs,
+			List<IncludeHeaderDefinition> includes,
+			TypeRegistry registry,
+			Types types) {
+		this.factoryDefs = factoryDefs;
 		this.includes = includes;
 		this.registry = registry;
+		this.types = types;
 	}
 
 	public void writeHeader(Writer headerWriter) {
@@ -55,20 +64,22 @@ public class HeaderGenerator {
 			}
 			w.println();
 
-			for (ProtocolDescriptor p : sortProtocols(registry.getProtocols())) {
-				writeForwardDecl(w, p);
+			List<Map.Entry<Type, ClassDescriptor>> sortedProtocols = sortProtocols(registry.protocols);
+			for (Map.Entry<Type, ClassDescriptor> entry : sortedProtocols) {
+				writeForwardDecl(w, entry.getValue());
 			}
 			w.println();
 
-			for (ProtocolDescriptor p : registry.getProtocols()) {
-				writeProtocol(w, p);
+			for (Map.Entry<Type, ClassDescriptor> values : sortedProtocols) {
+				Type key = values.getKey();
+				ClassDescriptor p = values.getValue();
+				writeProtocol(w, key, p);
 			}
+
 			w.println();
 
-			for (ObjectDefinition o : objects) {
-				writeObject(w, o);
-				//only create one object for framework entry
-				break;
+			for (FactoryDefinition o : factoryDefs) {
+				writeInitiatorFunction(w, o);
 			}
 		}
 	}
@@ -87,50 +98,142 @@ public class HeaderGenerator {
 		w.println();
 	}
 
-	private void writeForwardDecl(PrintWriter w, ProtocolDescriptor p) {
+	private void writeForwardDecl(PrintWriter w, ClassDescriptor p) {
+		String iosType;
+		switch(p.getClassType()) {
+			case Protocol:
+				iosType = "protocol";
+				break;
+			case Interface:
+				// XCode complains that the specification is invalid with forward declarations of interfaces.
+				return;
+			default:
+				throw new IllegalArgumentException("Unknown type: " + p.getClassType());
+		}
 		String objcName = p.getObjcName();
-		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s;%n", objcName);
+
+		w.printf("@%s %s;%n", iosType, objcName);
 	}
 
-	private void writeProtocol(PrintWriter w, ProtocolDescriptor p) {
+	private void writeProtocol(PrintWriter w, Type type, ClassDescriptor p) {
+		if (p.isDeprecated()) {
+			writeDeprecated(w);
+			w.println();
+		}
+
 		String objcName = p.getObjcName();
 		//w.printf("NS_SWIFT_NAME(%s)%n", objcName);
-		w.printf("@protocol %s", objcName);
+		boolean isProtocol = p.getClassType() == ClassDescriptor.ClassType.Protocol;
+		boolean isInterface = p.getClassType() == ClassDescriptor.ClassType.Interface;
+		String iosType = isProtocol
+				? "protocol"
+				: (isInterface
+						? "interface"
+						: "unknown");
+		w.printf("@%s %s", iosType, objcName);
 		// add protocol inheritance
-		if (! p.getExtensions().isEmpty()) {
-			w.print("<");
+		if (!p.getExtensions().isEmpty()) {
+			if (isProtocol) {
+				w.print("<");
+			} else if (isInterface) {
+				w.print(" : ");
+			}
 			String prefix = "";
 			for (DeclarationDescriptor ext : p.getExtensions()) {
 				w.printf("%s%s", prefix, ext.getObjcName());
 				prefix = ", ";
 			}
-			w.print(">");
+			if (isProtocol) {
+				w.print(">");
+			}
 		}
-		w.println();
+		if (isInterface) {
+			w.println(" {");
+			w.println("}");
+		} else if (isProtocol) {
+			w.println();
+		}
 
 		for (MethodDescriptor md : p.getMethods()) {
-			writeMethod(w, md);
+			boolean overrides = isOverridingMethod(md, p, type);
+			if (!overrides) {
+				this.writeMethod(w, md);
+			}
 		}
 
 		w.println("@end");
-		w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		if (isProtocol) {
+			w.printf("typedef NSObject<%s> %s;%n", objcName, objcName);
+		}
 		w.println();
+	}
+
+	private boolean isOverridingMethod(MethodDescriptor method, ClassDescriptor owner, Type ownerType) {
+		boolean overrides = false;
+		for (LookupDeclarationDescriptor extension : owner.getExtensions()) {
+			final Type inheritedType = extension.getType();
+			ClassDescriptor protocol = this.registry.protocols.get(inheritedType);
+			if (protocol != null) {
+				for (MethodDescriptor inheritedMethod : protocol.getMethods()) {
+
+					if (method.getMethodSymbol().overrides(inheritedMethod.getMethodSymbol(), ownerType.tsym, types, false)) {
+						overrides = true;
+						break;
+					}
+				}
+			}
+			if (overrides) {
+				break;
+			}
+		}
+		return overrides;
 	}
 
 	private void writeMethod(PrintWriter w, MethodDescriptor md) {
 		w.print("-");
-		md.printSignature(w);
+		writeSignature(w, md);
+		if (md.isDeprecated()) {
+			w.print(" ");
+			writeDeprecated(w);
+		}
 		w.println(";");
 	}
 
-	private void writeObject(PrintWriter w, ObjectDefinition o) {
-		String protocolName = o.getProtocolName(this.registry.getProtocols());
-		w.printf("static %s* %s() {%n", protocolName, o.getFactoryMethodName());
-		w.printf("\textern %s* rvmInstantiateFramework(const char *className);%n", protocolName);
+	private void writeDeprecated(PrintWriter w) {
+		w.print("__attribute__((deprecated))");
+	}
+
+	private void writeInitiatorFunction(PrintWriter w, FactoryDefinition o) {
+		String factoryMethod = o.getFactoryMethodName();
+		ClassDescriptor classDescriptor = o.getClassDescriptor();
+		if (factoryMethod == null) {
+			return;
+		}
+		String iosType = classDescriptor.getIosType();
+		w.printf("static %s %s() __attribute__((deprecated(\"This factory method is obsolete. Use init method(s) instead.\"))) {%n",
+				iosType, factoryMethod);
+		w.printf("\textern %s rvmInstantiateFramework(const char *className);%n", iosType);
 		w.printf("\treturn rvmInstantiateFramework(\"%s\");%n", o.getJavaName());
 		w.println("}");
 		w.println();
+	}
+
+	public void writeSignature(PrintWriter w, MethodDescriptor md) {
+
+		w.printf("(%s) %s", md.getReturnType().getIosType(), md.getName());
+		boolean isFirstParameter = true;
+		for (MethodParameterDescriptor mp : md.getParameters()) {
+			final String effectiveParameterType = mp.getType().getIosType();
+			final String paramName = mp.getName();
+			if (isFirstParameter) {
+				w.printf(":(%s)%s", effectiveParameterType, paramName);
+				isFirstParameter = false;
+			} else {
+				char firstCharacter = Character.toUpperCase(paramName.charAt(0));
+				String remainingChar = paramName.substring(1);
+				w.printf(" with%s%s:(%s)%s", firstCharacter, remainingChar, effectiveParameterType, paramName);
+			}
+		}
 	}
 
 	private void writeEnum(PrintWriter w, EnumDescriptor e){
@@ -148,12 +251,13 @@ public class HeaderGenerator {
 
 	}
 
-	private List<ProtocolDescriptor> sortProtocols(List<ProtocolDescriptor> input) {
-		List<ProtocolDescriptor> protocols = new ArrayList<>(input.size());
-		for (ProtocolDescriptor next : input) {
+	private List<Map.Entry<Type, ClassDescriptor>> sortProtocols(Map<Type, ClassDescriptor> input) {
+		List<Map.Entry<Type, ClassDescriptor>> protocols = new ArrayList<>(input.size());
+		for (Map.Entry<Type, ClassDescriptor> entry : input.entrySet()) {
+			ClassDescriptor next = entry.getValue();
 			if (next.getExtensions().isEmpty()) {
 				// no dependency, insert at the beginning right away
-				protocols.add(0, next);
+				protocols.add(0, entry);
 			} else {
 				// we want to insert this element after the last element of the extension list
 				// or if something is missing, insert it at the foremost position, so that a later insertion will if in
@@ -164,7 +268,8 @@ public class HeaderGenerator {
 					extensionNames.add(extension.getObjcName());
 				}
 				for (int i = 0; i < protocols.size(); i++) {
-					ProtocolDescriptor testObj = protocols.get(i);
+					Map.Entry<Type, ClassDescriptor> testEntry = protocols.get(i);
+					ClassDescriptor testObj = testEntry.getValue();
 					// remove and see if an element has been removed actually
 					if (extensionNames.remove(testObj.getObjcName())) {
 						// advance insertion index to the position after this element
@@ -176,7 +281,7 @@ public class HeaderGenerator {
 					}
 				}
 				// add the element at the correct psoition
-				protocols.add(idx, next);
+				protocols.add(idx, entry);
 			}
 		}
 		return protocols;

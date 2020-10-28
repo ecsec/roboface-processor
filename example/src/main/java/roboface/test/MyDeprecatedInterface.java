@@ -16,11 +16,8 @@ import org.openecard.robovm.annotations.FrameworkInterface;
  * @author Neil Crossley
  */
 @FrameworkInterface
-public interface SomeSimpleInterface {
+@Deprecated
+public interface MyDeprecatedInterface {
 
 	boolean hasMethod();
-
-	@Deprecated
-	void myDeprecatedMethod();
-
 }
