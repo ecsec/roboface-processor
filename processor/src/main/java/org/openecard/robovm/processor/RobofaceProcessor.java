@@ -255,6 +255,28 @@ public class RobofaceProcessor extends AbstractProcessor {
 
 						final FactoryDefinition factoryDef = new FactoryDefinition(className, factoryName, interfaceDesc);
 						factoryDefs.add(factoryDef);
+
+						if (factoryName != null)
+						{
+							// add instance method
+
+							// define return type
+							JCTree.JCExpression returnType = tm.Type(nsObjectSymbol.type);
+							// define instance creation
+							JCTree.JCNewClass newSt = tm.NewClass(null, com.sun.tools.javac.util.List.nil(),
+									tm.Type(ccd.sym.asType()), com.sun.tools.javac.util.List.nil(), null);
+							JCTree.JCReturn newRet = tm.Return(newSt);
+							// define method block
+							JCTree.JCBlock body = tm.Block(0, com.sun.tools.javac.util.List.of(newRet));
+							// stick method together
+							JCTree.JCMethodDecl instMeth = tm.MethodDef(tm.Modifiers(Flags.PUBLIC | Flags.STATIC),
+									names.fromString("instantiate"),
+									returnType, com.sun.tools.javac.util.List.nil(), com.sun.tools.javac.util.List.nil(),
+									com.sun.tools.javac.util.List.nil(),
+									body, null);
+
+							ccd.defs = ccd.defs.append(instMeth);
+						}
 					}
 				}
 
