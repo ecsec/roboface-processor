@@ -22,6 +22,7 @@
 
 package org.openecard.robovm.processor;
 
+import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Type;
 import com.sun.tools.javac.code.Types;
 import java.io.PrintWriter;
@@ -169,14 +170,16 @@ public class HeaderGenerator {
 	}
 
 	private boolean isOverridingMethod(MethodDescriptor method, ClassDescriptor owner, Type ownerType) {
+		final String targetMethodName = method.getName();
+		final Symbol.MethodSymbol targetMethodSymbol = method.getMethodSymbol();
 		boolean overrides = false;
 		for (LookupDeclarationDescriptor extension : owner.getExtensions()) {
 			final Type inheritedType = extension.getType();
 			ClassDescriptor protocol = this.registry.protocols.get(inheritedType);
 			if (protocol != null) {
 				for (MethodDescriptor inheritedMethod : protocol.getMethods()) {
-
-					if (method.getMethodSymbol().overrides(inheritedMethod.getMethodSymbol(), ownerType.tsym, types, false)) {
+					boolean isNameEqual = targetMethodName.equals(inheritedMethod.getName());
+					if (isNameEqual && targetMethodSymbol.overrides(inheritedMethod.getMethodSymbol(), ownerType.tsym, types, false)) {
 						overrides = true;
 						break;
 					}
