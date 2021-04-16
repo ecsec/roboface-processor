@@ -22,6 +22,7 @@
 
 package roboface.test;
 
+import java.util.Date;
 import org.openecard.robovm.annotations.FrameworkInterface;
 
 
@@ -34,7 +35,10 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeInterface{
 
-	void simpleFun();
+    void simpleFun();
+
+    public Date getDate();
+    public Date addOneDay(Date d);
 
 	void someFun(SomeEnum nameOfFirstParameter, String nameOfSecondParameter);
 

@@ -22,6 +22,7 @@
 
 package roboface.test;
 
+import java.util.Date;
 import org.robovm.apple.foundation.NSObject;
 
 
@@ -46,5 +47,16 @@ public class SomeInterfaceImp extends NSObject implements SomeInterface{
 	public SomeEnum giveEnumBack() {
 		return SomeEnum.SecondValue;
 	}
+
+    @Override
+    public Date getDate() {
+	System.out.println("Returning now as date.");
+	return new Date();
+    }
+
+    @Override
+    public Date addOneDay(Date d) {
+	return new Date(d.getTime() + 1000 * 60 * 60 * 24);
+    }
 
 }

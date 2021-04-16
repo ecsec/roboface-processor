@@ -18,7 +18,7 @@ import org.openecard.robovm.annotations.FrameworkInterface;
 @FrameworkInterface
 public interface SomeSimpleInterface {
 
-	boolean hasMethod();
+    boolean hasMethod();
 
 	@Deprecated
 	void myDeprecatedMethod();

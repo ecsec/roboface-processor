@@ -22,6 +22,7 @@
 
 package roboface.test;
 
+import java.util.Date;
 import org.robovm.apple.foundation.NSObject;
 
 
@@ -51,5 +52,15 @@ public class SomeInnerImp extends NSObject implements SomeInterface.SomeInnerInt
 	public SomeEnum giveEnumBack() {
 		return SomeEnum.LastValue;
 	}
+
+    @Override
+    public Date getDate() {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public Date addOneDay(Date d) {
+	throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 
 }
