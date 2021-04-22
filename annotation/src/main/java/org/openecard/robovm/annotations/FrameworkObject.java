@@ -36,10 +36,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 public @interface FrameworkObject {
 
-	/**
-	 * Name of the factory function added to the ObjC header.
-	 */
-	@Deprecated
-	public String factoryMethod();
+    /**
+     * Name of the factory function added to the ObjC header.
+     * If none given, the factory method won't get emitted.
+     */
+    @Deprecated
+    public String factoryMethod() default "";
 
 }

@@ -33,7 +33,9 @@ import roboface.preprocesstest.PreProcessedObject;
  * @author Florian Otto
  */
 
-@FrameworkObject(factoryMethod = "getFrameworkInstance")
+//old method for initialization with static function
+//@FrameworkObject(factoryMethod = "getFrameworkInstance")
+@FrameworkObject()
 public class MyFrameworkImplementation implements MyFrameworkInterface {
 
 	static {

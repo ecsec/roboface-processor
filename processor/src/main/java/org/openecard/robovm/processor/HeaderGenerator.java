@@ -209,7 +209,7 @@ public class HeaderGenerator {
 	private void writeInitiatorFunction(PrintWriter w, FactoryDefinition o) {
 		String factoryMethod = o.getFactoryMethodName();
 		ClassDescriptor classDescriptor = o.getClassDescriptor();
-		if (factoryMethod == null) {
+		if (factoryMethod == null || factoryMethod.isEmpty()) {
 			return;
 		}
 		String iosType = classDescriptor.getIosType();
