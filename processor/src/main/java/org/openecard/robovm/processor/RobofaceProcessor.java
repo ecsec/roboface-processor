@@ -40,6 +40,7 @@ import com.sun.tools.javac.tree.TreeMaker;
 import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
+import it.auties.reified.util.IllegalReflection;
 import java.io.IOException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -81,6 +82,10 @@ import org.openecard.robovm.annotations.FrameworkObject;
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 //@AutoService(Processor.class)
 public class RobofaceProcessor extends AbstractProcessor {
+
+	static {
+		IllegalReflection.openJavac();
+	}
 
 	// commandline options for use with -Aoption=...
 	public static final String HEADER_PATH = "roboface.headerpath";
