@@ -23,6 +23,7 @@ package org.openecard.robovm.processor;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import com.sun.source.util.TreePathScanner;
@@ -37,7 +38,6 @@ import com.sun.tools.javac.processing.JavacProcessingEnvironment;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.tree.TreeMaker;
-import com.sun.tools.javac.tree.TreeTranslator;
 import com.sun.tools.javac.util.Names;
 import com.sun.tools.javac.util.Pair;
 import it.auties.reified.util.IllegalReflection;
@@ -116,7 +116,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		jcProcEnv = (JavacProcessingEnvironment) processingEnv;
 		firstPass = true;
 		factoryDefs = new ArrayList<>();
-		registry = new TypeRegistry(getInheritanceBlacklist(jcProcEnv));
+		registry = new TypeRegistry(getInheritanceBlacklist(processingEnv));
 
 		methodAttributeSym = jcProcEnv.getElementUtils().getTypeElement("org.robovm.objc.annotation.Method");
 		stringClazz = jcProcEnv.getElementUtils().getTypeElement("java.lang.String");
@@ -317,12 +317,11 @@ public class RobofaceProcessor extends AbstractProcessor {
 			@Override
 			public Trees visitClass(ClassTree classTree, CompilationUnitTree unitTree) {
 
-				if (classTree instanceof JCTree.JCClassDecl && unitTree instanceof JCCompilationUnit) {
-					final JCCompilationUnit compilationUnit = (JCCompilationUnit) unitTree;
+				if (classTree instanceof JCTree.JCClassDecl) {
 					final JCTree.JCClassDecl ccd = (JCTree.JCClassDecl) classTree;
 
 					// Only process on files which have been compiled from source
-					if (compilationUnit.sourcefile.getKind() == JavaFileObject.Kind.SOURCE && !ccd.sym.isInterface()) {
+					if (unitTree.getSourceFile().getKind() == JavaFileObject.Kind.SOURCE && !ccd.sym.isInterface()) {
 						boolean extendsPublicRobofaceInterface = scanInterfaces(ccd, mustExtendNSObject);
 						if (extendsPublicRobofaceInterface && ccd.extending == null) {
 							System.out.printf("Modifying class %s to inherit from NSObject, because it must be bindable to iOS.\n", ccd.sym);
@@ -431,21 +430,25 @@ public class RobofaceProcessor extends AbstractProcessor {
 			List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations) {
 
 		// find methods in this interface and add @Method annotation
-		ccd.accept(new TreeTranslator() {
+		ClassTree ctree = ccd;
+		ctree.accept(new com.sun.source.util.TreeScanner<Void, Void>() {
+
 			@Override
-			public <T extends JCTree> T translate(T tree) {
+			public Void scan(Tree tree, Void p) {
 				if (tree != null && (tree.getKind() == Tree.Kind.METHOD)) {
-					return super.translate(tree);
+					return super.scan(tree, p);
 				} else {
-					return tree;
+					return p;
 				}
 			}
 
 			@Override
-			public void visitMethodDef(JCTree.JCMethodDecl tree) {
-				super.visitMethodDef(tree);
+			public Void visitMethod(MethodTree node, Void p) {
+				super.visitMethod(node, p);
+
+				JCTree.JCMethodDecl tree = (JCTree.JCMethodDecl) node;
 				if (!(tree.sym instanceof Symbol.MethodSymbol)) {
-					return;
+					return null;
 				}
 				JCTree.JCModifiers modifiers = tree.getModifiers();
 				Set<Modifier> flags = modifiers.getFlags();
@@ -453,13 +456,13 @@ public class RobofaceProcessor extends AbstractProcessor {
 						|| flags.contains(Modifier.PROTECTED)
 						|| flags.contains(Modifier.STATIC)) {
 					System.out.printf(" - Skipping method %s because it has the wrong flags: %s\n", tree.name, tree.mods.getFlags());
-					return;
+					return null;
 				}
 
 				MethodDescriptor methodDescriptor = registry.createMethod(tree);
 
 				if (methodDescriptor == null) {
-					return;
+					return null;
 				}
 				// capture method definitions
 
@@ -477,20 +480,19 @@ public class RobofaceProcessor extends AbstractProcessor {
 					methodDeclarations.add(new AbstractMap.SimpleImmutableEntry<>(methodParamDescr.getType(), paramDecl.getModifiers()));
 				}
 
-				JCTree.JCAnnotation at = annotateWithMethodSelector(methodDescriptor, tree);
+				annotateWithMethodSelector(methodDescriptor, tree);
 
-				System.out.printf("Adding @Method annotation %s to method %s\n", at, tree.name);
+				return null;
 			}
-
-		});
+		}, null);
 	}
 
-	private JCTree.JCAnnotation annotateWithMethodSelector(final MethodDescriptor methodDescriptor, JCTree.JCMethodDecl tree) {
+	private void annotateWithMethodSelector(final MethodDescriptor methodDescriptor, JCTree.JCMethodDecl tree) {
 		// create @Method type
 		Pair<Symbol.MethodSymbol, Attribute> ds = new Pair<>(methodSymbol, new Attribute.Constant(stringClazz.type, methodDescriptor.asSelector()));
 		JCTree.JCAnnotation at = tm.Annotation(new Attribute.Compound(methodAttributeSym.asType(), com.sun.tools.javac.util.List.of(ds)));
+		System.out.printf("Adding @Method annotation %s to method %s\n", at, tree.name);
 		tree.mods.annotations = tree.mods.annotations.append(at);
-		return at;
 	}
 
 	private void insertMarshallers(List<Map.Entry<TypeDescriptor, JCTree.JCModifiers>> methodDeclarations, TreeMaker tm) {
@@ -535,7 +537,7 @@ public class RobofaceProcessor extends AbstractProcessor {
 		return result;
 	}
 
-	private static Set<String> getInheritanceBlacklist(JavacProcessingEnvironment processingEnv) {
+	private static Set<String> getInheritanceBlacklist(ProcessingEnvironment processingEnv) {
 
 		String rawInheritanceBlacklist = processingEnv.getOptions().getOrDefault(INHERITANCE_BLACKLIST, "");
 
