@@ -79,7 +79,7 @@ import org.openecard.robovm.annotations.FrameworkObject;
 	"org.openecard.robovm.annotations.FrameworkInterface",
 	"org.openecard.robovm.annotations.FrameworkObject"
 })
-@SupportedSourceVersion(SourceVersion.RELEASE_8)
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
 //@AutoService(Processor.class)
 public class RobofaceProcessor extends AbstractProcessor {
 

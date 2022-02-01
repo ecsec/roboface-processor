@@ -12,32 +12,28 @@
 	<packaging>jar</packaging>
 	<name>Roboface Annotation Processor Example</name>
 
-	<properties>
-		<robovm.version>2.3.10</robovm.version>
-	</properties>
 
 	<build>
-<plugins>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-dependency-plugin</artifactId>
-						<version>3.1.1</version>
-						<executions>
-							<execution>
-								<id>copy-framework-classes</id>
-								<goals>
-									<goal>unpack-dependencies</goal>
-								</goals>
-								<configuration>
-									<includeArtifactIds>roboface-preprocess-example</includeArtifactIds>
-									<outputDirectory>${basedir}/target/classes/</outputDirectory>
-									<includes>/roboheaders/*</includes>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-framework-classes</id>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeArtifactIds>roboface-preprocess-example</includeArtifactIds>
+							<outputDirectory>${basedir}/target/classes/</outputDirectory>
+							<includes>/roboheaders/*</includes>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 
-</plugins>
 		<pluginManagement>
 			<plugins>
 

@@ -12,9 +12,6 @@
 	<name>Roboface iOS Framework Example</name>
 	<packaging>jar</packaging>
 
-	<properties>
-		<robovm.version>2.3.10</robovm.version>
-	</properties>
 
 	<dependencies>
 		<dependency>
@@ -54,7 +51,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-dependency-plugin</artifactId>
-						<version>3.1.1</version>
 						<executions>
 							<execution>
 								<id>copy-framework-classes</id>
